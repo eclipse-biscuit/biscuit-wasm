@@ -32,6 +32,6 @@
   "sideEffects": "false",
   "types": "module/biscuit.d.ts",
   "devDependencies": {
-    "prettier": "^2.8.6"
+    "prettier": "^2.8.8"
   }
 }

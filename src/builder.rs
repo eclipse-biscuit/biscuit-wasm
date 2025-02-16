@@ -32,58 +32,66 @@ impl BiscuitBuilder {
     }
 
     /// adds the content of an existing `BlockBuilder`
-    pub fn merge(&mut self, other: &BlockBuilder) {
-        self.0.merge(other.0.clone())
+    pub fn merge(self, other: &BlockBuilder) -> Self {
+        BiscuitBuilder(self.0.merge(other.0.clone()))
     }
 
     /// Sets the root key id
     #[wasm_bindgen(js_name = setRootKeyId)]
-    pub fn set_root_key_id(&mut self, root_key_id: u32) {
-        self.0.set_root_key_id(root_key_id)
+    pub fn set_root_key_id(self, root_key_id: u32) -> BiscuitBuilder {
+        BiscuitBuilder(self.0.root_key_id(root_key_id))
     }
 
     /// Adds a Datalog fact
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(&mut self, fact: &Fact) -> Result<(), JsValue> {
-        self.0
-            .add_fact(fact.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_fact(self, fact: &Fact) -> Result<BiscuitBuilder, JsValue> {
+        Ok(BiscuitBuilder(
+            self.0
+                .fact(fact.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds a Datalog rule
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(&mut self, rule: &Rule) -> Result<(), JsValue> {
-        self.0
-            .add_rule(rule.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_rule(self, rule: &Rule) -> Result<BiscuitBuilder, JsValue> {
+        Ok(BiscuitBuilder(
+            self.0
+                .rule(rule.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds a check
     ///
     /// All checks, from authorizer and token, must be validated to authorize the request
     #[wasm_bindgen(js_name = addCheck)]
-    pub fn add_check(&mut self, check: &Check) -> Result<(), JsValue> {
-        self.0
-            .add_check(check.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_check(self, check: &Check) -> Result<BiscuitBuilder, JsValue> {
+        Ok(BiscuitBuilder(
+            self.0
+                .check(check.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCode)]
-    pub fn add_code(&mut self, source: &str) -> Result<(), JsValue> {
-        self.0
-            .add_code(source)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_code(self, source: &str) -> Result<BiscuitBuilder, JsValue> {
+        Ok(BiscuitBuilder(
+            self.0
+                .code(source)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCodeWithParameters)]
     pub fn add_code_with_parameters(
-        &mut self,
+        self,
         source: &str,
         parameters: JsValue,
         scope_parameters: JsValue,
-    ) -> Result<(), JsValue> {
+    ) -> Result<BiscuitBuilder, JsValue> {
         let parameters: HashMap<String, Term> = serde_wasm_bindgen::from_value(parameters).unwrap();
 
         let parameters = parameters
@@ -98,9 +106,11 @@ impl BiscuitBuilder {
             .map(|(k, p)| (k, p.0))
             .collect::<HashMap<_, _>>();
 
-        self.0
-            .add_code_with_params(source, parameters, scope_parameters)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        Ok(BiscuitBuilder(
+            self.0
+                .code_with_params(source, parameters, scope_parameters)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     #[wasm_bindgen(js_name = toString)]
@@ -131,46 +141,54 @@ impl BlockBuilder {
 
     /// Adds a Datalog fact
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(&mut self, fact: Fact) -> Result<(), JsValue> {
-        self.0
-            .add_fact(fact.0)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_fact(self, fact: Fact) -> Result<BlockBuilder, JsValue> {
+        Ok(BlockBuilder(
+            self.0
+                .fact(fact.0)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds a Datalog rule
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(&mut self, rule: Rule) -> Result<(), JsValue> {
-        self.0
-            .add_rule(rule.0)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_rule(self, rule: Rule) -> Result<BlockBuilder, JsValue> {
+        Ok(BlockBuilder(
+            self.0
+                .rule(rule.0)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds a check
     ///
     /// All checks, from authorizer and token, must be validated to authorize the request
     #[wasm_bindgen(js_name = addCheck)]
-    pub fn add_check(&mut self, check: Check) -> Result<(), JsValue> {
-        self.0
-            .add_check(check.0)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_check(self, check: Check) -> Result<BlockBuilder, JsValue> {
+        Ok(BlockBuilder(
+            self.0
+                .check(check.0)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCode)]
-    pub fn add_code(&mut self, source: &str) -> Result<(), JsValue> {
-        self.0
-            .add_code(source)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    pub fn add_code(self, source: &str) -> Result<BlockBuilder, JsValue> {
+        Ok(BlockBuilder(
+            self.0
+                .code(source)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCodeWithParameters)]
     pub fn add_code_with_parameters(
-        &mut self,
+        self,
         source: &str,
         parameters: JsValue,
         scope_parameters: JsValue,
-    ) -> Result<(), JsValue> {
+    ) -> Result<BlockBuilder, JsValue> {
         let parameters: HashMap<String, Term> = serde_wasm_bindgen::from_value(parameters).unwrap();
 
         let parameters = parameters
@@ -185,9 +203,11 @@ impl BlockBuilder {
             .map(|(k, p)| (k, p.0))
             .collect::<HashMap<_, _>>();
 
-        self.0
-            .add_code_with_params(source, parameters, scope_parameters)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        Ok(BlockBuilder(
+            self.0
+                .code_with_params(source, parameters, scope_parameters)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     #[wasm_bindgen(js_name = toString)]
