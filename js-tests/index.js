@@ -32,13 +32,16 @@ test("keypair generation", function(t) {
   t.end();
 });
 
-test("biscuit builder", function(t) {
+test("biscuit builder", function (t) {
   let userId = "1234";
-  let builder = biscuit`user(${userId});`;
-  builder.addFact(fact`fact(${userId})`);
-  builder.addRule(rule`u($id) <- user($id, ${userId})`);
-  builder.addCheck(check`check if check(${userId})`);
-  builder.setRootKeyId(1234);
+  console.log("a");
+
+  let builder = biscuit`user(${userId});`
+    .addFact(fact`fact(${userId})`)
+    .addRule(rule`u($id) <- user($id, ${userId})`)
+    .addCheck(check`check if check(${userId})`)
+    .setRootKeyId(1234);
+  console.log("b");
   t.equal(
     builder.toString(),
     `// root key id: 1234
@@ -57,12 +60,12 @@ check if check("1234");
   t.end();
 });
 
-test("block builder", function(t) {
+test("block builder", function (t) {
   let userId = "1234";
-  let builder = block`check if user(${userId});`;
-  builder.addFact(fact`fact(${userId})`);
-  builder.addRule(rule`u($id) <- user($id, ${userId})`);
-  builder.addCheck(check`check if check(${userId})`);
+  let builder = block`check if user(${userId});`
+    .addFact(fact`fact(${userId})`)
+    .addRule(rule`u($id) <- user($id, ${userId})`)
+    .addCheck(check`check if check(${userId})`);
   t.equal(
     builder.toString(),
     `fact("1234");

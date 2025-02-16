@@ -31,13 +31,13 @@ function tagged(builder) {
     for (let i = 0; i < strings.length; i++) {
       code += strings[i];
       if (i < values.length) {
-        code += `{_param_${i}}`;
+        code += `{param_${i}}`;
       }
     }
 
     const termParameters = Object.fromEntries(
       values.map((v, i) => {
-        return [`_param_${i}`, prepareTerm(v)];
+        return [`param_${i}`, prepareTerm(v)];
       })
     );
 
@@ -53,12 +53,12 @@ function tagged(builder) {
         .map((v, i) => [i, v])
         .filter(([i, v]) => isKeyParam(v))
         .map(([i, v]) => {
-          return [`_param_${i}`, prepareTerm(v)];
+          return [`param_${i}`, prepareTerm(v)];
         })
     );
 
-    builder.addCodeWithParameters(code, termParameters, keyParameters);
-    return builder;
+    console.log(code, termParameters, keyParameters);
+    return builder.addCodeWithParameters(code, termParameters, keyParameters);
   };
 }
 
@@ -82,13 +82,13 @@ export function fact(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
@@ -107,13 +107,13 @@ export function rule(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
@@ -137,13 +137,13 @@ export function check(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
@@ -167,13 +167,13 @@ export function policy(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
