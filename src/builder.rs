@@ -10,88 +10,112 @@ use crate::{make_rng, Biscuit, PrivateKey, PublicKey};
 
 /// Creates a token
 #[wasm_bindgen]
-pub struct BiscuitBuilder(pub(crate) biscuit::builder::BiscuitBuilder);
+pub struct BiscuitBuilder(pub(crate) Option<biscuit::builder::BiscuitBuilder>);
 
 #[wasm_bindgen]
 impl BiscuitBuilder {
     #[wasm_bindgen(constructor)]
     pub fn new() -> BiscuitBuilder {
-        BiscuitBuilder(biscuit::builder::BiscuitBuilder::new())
+        BiscuitBuilder(Some(biscuit::builder::BiscuitBuilder::new()))
     }
 
     #[wasm_bindgen(js_name = build)]
-    pub fn build(self, root: &PrivateKey) -> Result<Biscuit, JsValue> {
+    pub fn build(mut self, root: &PrivateKey) -> Result<Biscuit, JsValue> {
         let keypair = biscuit_auth::KeyPair::from(&root.0);
 
         let mut rng = make_rng();
         Ok(Biscuit(
             self.0
+                .take()
+                .expect("empty BiscuitBuilder")
                 .build_with_rng(&keypair, biscuit::datalog::SymbolTable::default(), &mut rng)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
     }
 
     /// adds the content of an existing `BlockBuilder`
-    pub fn merge(self, other: &BlockBuilder) -> Self {
-        BiscuitBuilder(self.0.merge(other.0.clone()))
+    pub fn merge(&mut self, other: &BlockBuilder) {
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty BiscuitBuilder")
+                .merge(other.0.clone().expect("empty BlockBuilder")),
+        );
     }
 
     /// Sets the root key id
     #[wasm_bindgen(js_name = setRootKeyId)]
-    pub fn set_root_key_id(self, root_key_id: u32) -> BiscuitBuilder {
-        BiscuitBuilder(self.0.root_key_id(root_key_id))
+    pub fn set_root_key_id(&mut self, root_key_id: u32) {
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty BiscuitBuilder")
+                .root_key_id(root_key_id),
+        );
     }
 
     /// Adds a Datalog fact
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(self, fact: &Fact) -> Result<BiscuitBuilder, JsValue> {
-        Ok(BiscuitBuilder(
+    pub fn add_fact(&mut self, fact: &Fact) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BiscuitBuilder")
                 .fact(fact.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a Datalog rule
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(self, rule: &Rule) -> Result<BiscuitBuilder, JsValue> {
-        Ok(BiscuitBuilder(
+    pub fn add_rule(&mut self, rule: &Rule) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BiscuitBuilder")
                 .rule(rule.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a check
     ///
     /// All checks, from authorizer and token, must be validated to authorize the request
     #[wasm_bindgen(js_name = addCheck)]
-    pub fn add_check(self, check: &Check) -> Result<BiscuitBuilder, JsValue> {
-        Ok(BiscuitBuilder(
+    pub fn add_check(&mut self, check: &Check) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BiscuitBuilder")
                 .check(check.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCode)]
-    pub fn add_code(self, source: &str) -> Result<BiscuitBuilder, JsValue> {
-        Ok(BiscuitBuilder(
+    pub fn add_code(&mut self, source: &str) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BiscuitBuilder")
                 .code(source)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCodeWithParameters)]
     pub fn add_code_with_parameters(
-        self,
+        &mut self,
         source: &str,
         parameters: JsValue,
         scope_parameters: JsValue,
-    ) -> Result<BiscuitBuilder, JsValue> {
+    ) -> Result<(), JsValue> {
         let parameters: HashMap<String, Term> = serde_wasm_bindgen::from_value(parameters).unwrap();
 
         let parameters = parameters
@@ -106,16 +130,19 @@ impl BiscuitBuilder {
             .map(|(k, p)| (k, p.0))
             .collect::<HashMap<_, _>>();
 
-        Ok(BiscuitBuilder(
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BiscuitBuilder")
                 .code_with_params(source, parameters, scope_parameters)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
-        self.0.to_string()
+        self.0.as_ref().expect("empty BiscuitBuilder").to_string()
     }
 }
 
@@ -127,7 +154,7 @@ impl Default for BiscuitBuilder {
 
 /// Creates a block to attenuate a token
 #[wasm_bindgen]
-pub struct BlockBuilder(pub(crate) biscuit::builder::BlockBuilder);
+pub struct BlockBuilder(pub(crate) Option<biscuit::builder::BlockBuilder>);
 
 #[wasm_bindgen]
 impl BlockBuilder {
@@ -136,59 +163,71 @@ impl BlockBuilder {
     /// the builder can then be given to the token's append method to create an attenuated token
     #[wasm_bindgen(constructor)]
     pub fn new() -> BlockBuilder {
-        BlockBuilder(biscuit::builder::BlockBuilder::new())
+        BlockBuilder(Some(biscuit::builder::BlockBuilder::new()))
     }
 
     /// Adds a Datalog fact
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(self, fact: Fact) -> Result<BlockBuilder, JsValue> {
-        Ok(BlockBuilder(
+    pub fn add_fact(&mut self, fact: Fact) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BlockBuilder")
                 .fact(fact.0)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a Datalog rule
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(self, rule: Rule) -> Result<BlockBuilder, JsValue> {
-        Ok(BlockBuilder(
+    pub fn add_rule(&mut self, rule: Rule) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BlockBuilder")
                 .rule(rule.0)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a check
     ///
     /// All checks, from authorizer and token, must be validated to authorize the request
     #[wasm_bindgen(js_name = addCheck)]
-    pub fn add_check(self, check: Check) -> Result<BlockBuilder, JsValue> {
-        Ok(BlockBuilder(
+    pub fn add_check(&mut self, check: Check) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BlockBuilder")
                 .check(check.0)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCode)]
-    pub fn add_code(self, source: &str) -> Result<BlockBuilder, JsValue> {
-        Ok(BlockBuilder(
+    pub fn add_code(&mut self, source: &str) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BlockBuilder")
                 .code(source)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds facts, rules, checks and policies as one code block
     #[wasm_bindgen(js_name = addCodeWithParameters)]
     pub fn add_code_with_parameters(
-        self,
+        &mut self,
         source: &str,
         parameters: JsValue,
         scope_parameters: JsValue,
-    ) -> Result<BlockBuilder, JsValue> {
+    ) -> Result<(), JsValue> {
         let parameters: HashMap<String, Term> = serde_wasm_bindgen::from_value(parameters).unwrap();
 
         let parameters = parameters
@@ -203,16 +242,19 @@ impl BlockBuilder {
             .map(|(k, p)| (k, p.0))
             .collect::<HashMap<_, _>>();
 
-        Ok(BlockBuilder(
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty BlockBuilder")
                 .code_with_params(source, parameters, scope_parameters)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
-        self.0.to_string()
+        self.0.as_ref().expect("empty BlockBuilder").to_string()
     }
 }
 

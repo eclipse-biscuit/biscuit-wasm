@@ -37,10 +37,10 @@ test("biscuit builder", function (t) {
   console.log("a");
 
   let builder = biscuit`user(${userId});`
-    .addFact(fact`fact(${userId})`)
-    .addRule(rule`u($id) <- user($id, ${userId})`)
-    .addCheck(check`check if check(${userId})`)
-    .setRootKeyId(1234);
+  builder.addFact(fact`fact(${userId})`);
+  builder.addRule(rule`u($id) <- user($id, ${userId})`);
+  builder.addCheck(check`check if check(${userId})`);
+  builder.setRootKeyId(1234);
   console.log("b");
   t.equal(
     builder.toString(),
@@ -62,10 +62,10 @@ check if check("1234");
 
 test("block builder", function (t) {
   let userId = "1234";
-  let builder = block`check if user(${userId});`
-    .addFact(fact`fact(${userId})`)
-    .addRule(rule`u($id) <- user($id, ${userId})`)
-    .addCheck(check`check if check(${userId})`);
+  let builder = block`check if user(${userId});`;
+  builder.addFact(fact`fact(${userId})`);
+  builder.addRule(rule`u($id) <- user($id, ${userId})`);
+  builder.addCheck(check`check if check(${userId})`);
   t.equal(
     builder.toString(),
     `fact("1234");
@@ -85,9 +85,8 @@ test("authorizer builder", function(t) {
   builder.addRule(rule`u($id) <- user($id, ${userId})`);
   builder.addCheck(check`check if check(${userId})`);
   builder.addPolicy(policy`allow if check(${userId})`);
-
-  builder.mergeBlock(block`check if true`);
-  builder.merge(authorizer`deny if true`);
+  builder.addCheck(check`check if true`);
+  builder.addPolicy(policy`deny if true`);
 
   // todo maybe the authorizer builder should have a toString
   // implementation that behaves more like the ones from
@@ -135,8 +134,8 @@ test("complete lifecycle", function(t) {
   let serializedToken = token.toBase64();
 
   let parsedToken = Biscuit.fromBase64(serializedToken, root.getPublicKey());
-  let auth = authorizer`allow if user(${id})`;
-  auth.addToken(parsedToken);
+  let auth = authorizer`allow if user(${id})`
+    .buildAuthenticated(parsedToken);
 
   let policy = auth.authorize();
   t.equal(policy, 0, "authorization suceeded");
@@ -144,29 +143,17 @@ test("complete lifecycle", function(t) {
   let otherKeyPair = new KeyPair();
   let r = rule`u($id) <- user($id), $id == ${id} trusting authority, ${otherKeyPair.getPublicKey()}`;
   let facts = auth.queryWithLimits(r, {
-    max_time_micro: 100000
+    max_time_micro: 100000,
   });
   t.equal(facts.length, 1, "correct number of query results");
   t.equal(facts[0].toString(), `u("1234")`, "correct query result");
   t.end();
 });
 
-test("parameter injection", function(t) {
-  t.equal(
-    fact`fact(${1234})`.toString(),
-    `fact(1234)`,
-    "number"
-  );
-  t.equal(
-    fact`fact(${"1234"})`.toString(),
-    `fact("1234")`,
-    "string"
-  );
-  t.equal(
-    fact`fact(${true})`.toString(),
-    `fact(true)`,
-    "boolean"
-  );
+test("parameter injection", function (t) {
+  t.equal(fact`fact(${1234})`.toString(), `fact(1234)`, "number");
+  t.equal(fact`fact(${"1234"})`.toString(), `fact("1234")`, "string");
+  t.equal(fact`fact(${true})`.toString(), `fact(true)`, "boolean");
   t.equal(
     fact`fact(${new Date("2023-03-28T14:31:06Z")})`.toString(),
     `fact(2023-03-28T14:31:06Z)`,
@@ -251,8 +238,7 @@ test("third-party blocks", function(t) {
   console.log(serializedToken);
 
   let parsedToken = Biscuit.fromBase64(serializedToken, root.getPublicKey());
-  let auth = authorizer`allow if user(${id})`;
-  auth.addToken(parsedToken);
+  let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 
   let policy = auth.authorize();
   t.equal(policy, 0, "authorization suceeded");

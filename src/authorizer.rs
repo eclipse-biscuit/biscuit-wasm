@@ -32,19 +32,20 @@ impl RunLimits {
 
 /// Creates a token
 #[wasm_bindgen]
-pub struct AuthorizerBuilder(pub(crate) biscuit::builder::AuthorizerBuilder);
+pub struct AuthorizerBuilder(pub(crate) Option<biscuit::builder::AuthorizerBuilder>);
 
 #[wasm_bindgen]
 impl AuthorizerBuilder {
     #[wasm_bindgen(constructor)]
     pub fn new() -> AuthorizerBuilder {
-        AuthorizerBuilder(biscuit::builder::AuthorizerBuilder::new())
+        AuthorizerBuilder(Some(biscuit::builder::AuthorizerBuilder::new()))
     }
 
-    #[wasm_bindgen(js_name = build)]
+    #[wasm_bindgen(js_name = buildAuthenticated)]
     pub fn build(self, token: &Biscuit) -> Result<Authorizer, JsValue> {
         Ok(Authorizer(
             self.0
+                .expect("empty AuthorizerBuilder")
                 .build(&token.0)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
@@ -54,6 +55,7 @@ impl AuthorizerBuilder {
     pub fn build_unauthenticated(self) -> Result<Authorizer, JsValue> {
         Ok(Authorizer(
             self.0
+                .expect("empty AuthorizerBuilder")
                 .build_unauthenticated()
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
@@ -61,62 +63,77 @@ impl AuthorizerBuilder {
 
     /// Adds a Datalog fact
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(self, fact: &Fact) -> Result<AuthorizerBuilder, JsValue> {
-        Ok(AuthorizerBuilder(
+    pub fn add_fact(&mut self, fact: &Fact) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
                 .fact(fact.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a Datalog rule
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(self, rule: &Rule) -> Result<AuthorizerBuilder, JsValue> {
-        Ok(AuthorizerBuilder(
+    pub fn add_rule(&mut self, rule: &Rule) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
                 .rule(rule.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a Datalog check
     #[wasm_bindgen(js_name = addCheck)]
-    pub fn add_check(self, check: &Check) -> Result<AuthorizerBuilder, JsValue> {
-        Ok(AuthorizerBuilder(
+    pub fn add_check(&mut self, check: &Check) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
                 .check(check.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a policy
     #[wasm_bindgen(js_name = addPolicy)]
-    pub fn add_policy(self, policy: &Policy) -> Result<AuthorizerBuilder, JsValue> {
-        Ok(AuthorizerBuilder(
+    pub fn add_policy(&mut self, policy: &Policy) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
                 .policy(policy.0.clone())
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a code block
     #[wasm_bindgen(js_name = addCode)]
-    pub fn add_code(self, source: &str) -> Result<AuthorizerBuilder, JsValue> {
-        Ok(AuthorizerBuilder(
+    pub fn add_code(&mut self, source: &str) -> Result<(), JsValue> {
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
                 .code(source)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 
     /// Adds a code block with parameters
     #[wasm_bindgen(js_name = addCodeWithParameters)]
     pub fn add_code_with_parameters(
-        self,
+        &mut self,
         source: &str,
         parameters: JsValue,
         scope_parameters: JsValue,
-    ) -> Result<AuthorizerBuilder, JsValue> {
+    ) -> Result<(), JsValue> {
         let parameters: HashMap<String, Term> = serde_wasm_bindgen::from_value(parameters).unwrap();
 
         let parameters = parameters
@@ -131,11 +148,14 @@ impl AuthorizerBuilder {
             .map(|(k, p)| (k, p.0))
             .collect::<HashMap<_, _>>();
 
-        Ok(AuthorizerBuilder(
+        self.0 = Some(
             self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
                 .code_with_params(source, parameters, scope_parameters)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
-        ))
+        );
+        Ok(())
     }
 }
 

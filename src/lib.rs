@@ -45,7 +45,7 @@ impl Biscuit {
         let keypair = KeyPair::new_ed25519();
         Ok(Biscuit(
             self.0
-                .append_with_keypair(&keypair.0, block.0.clone())
+                .append_with_keypair(&keypair.0, block.0.clone().expect("empty BlockBuilder"))
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
     }
@@ -223,7 +223,10 @@ impl ThirdPartyRequest {
     ) -> Result<ThirdPartyBlock, JsValue> {
         Ok(ThirdPartyBlock(
             self.0
-                .create_block(&private_key.0, block_builder.0.clone())
+                .create_block(
+                    &private_key.0,
+                    block_builder.0.clone().expect("empty BlockBuilder"),
+                )
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
     }
