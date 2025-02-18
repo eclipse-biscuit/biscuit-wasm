@@ -157,6 +157,11 @@ impl AuthorizerBuilder {
         );
         Ok(())
     }
+
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string(&self) -> String {
+        self.0.as_ref().unwrap().dump_code()
+    }
 }
 
 /// The Authorizer verifies a request according to its policies and the provided token

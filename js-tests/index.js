@@ -93,19 +93,13 @@ test("authorizer builder", function(t) {
   // BlockBuilder and BiscuitBuilder
   t.equal(
     builder.toString(),
-    `// Facts:
-// origin: authorizer
-fact("1234");
+    `fact("1234");
 
-// Rules:
-// origin: authorizer\nu($id) <- user($id, "1234");
+u($id) <- user($id, "1234");
 
-// Checks:
-// origin: authorizer
 check if check("1234");
 check if true;
 
-// Policies:
 allow if user("1234");
 allow if check("1234");
 deny if true;
