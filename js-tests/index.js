@@ -155,15 +155,17 @@ test("parameter injection", function (t) {
   );
   t.equal(
     fact`fact(${["a", 12, true]})`.toString(),
-    `fact([12, "a", true])`,
+    `fact(["a", 12, true])`,
+    "array"
+  );
+  t.equal(
+    fact`fact(${new Set(["a", 12, true])})`.toString(),
+    `fact({12, "a", true})`,
     "set"
   );
+
   let bytes = new Uint8Array(Buffer.from([0, 170, 187]));
-  t.equal(
-    fact`fact(${bytes})`.toString(),
-    `fact(hex:00aabb)`,
-    "byte array"
-  );
+  t.equal(fact`fact(${bytes})`.toString(), `fact(hex:00aabb)`, "byte array");
   let pubkey = PublicKey.fromString(
     "41e77e842e5c952a29233992dc8ebbedd2d83291a89bb0eec34457e723a69526"
   );
@@ -180,13 +182,15 @@ test("parameter injection", function (t) {
     fact(${true});
     fact(${new Date("2023-03-28T14:31:06Z")});
     fact(${["a", 12, true, new Date("2023-03-28T14:31:06Z")]});
+    fact(${new Set(["a", 12, true, new Date("2023-03-28T14:31:06Z")])});
     fact(${bytes});
     check if true trusting authority, ${pubkey};`.toString(),
     `fact(1234);
 fact("1234");
 fact(true);
 fact(2023-03-28T14:31:06Z);
-fact([12, "a", 2023-03-28T14:31:06Z, true]);
+fact(["a", 12, true, 2023-03-28T14:31:06Z]);
+fact({12, "a", 2023-03-28T14:31:06Z, true});
 fact(hex:00aabb);
 check if true trusting authority, ed25519/41e77e842e5c952a29233992dc8ebbedd2d83291a89bb0eec34457e723a69526;
 `,

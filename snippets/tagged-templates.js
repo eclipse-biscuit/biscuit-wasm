@@ -1,6 +1,6 @@
 import {
   Biscuit,
-  Authorizer,
+  AuthorizerBuilder,
   Rule,
   Fact,
   Check,
@@ -18,6 +18,8 @@ export function prepareTerm(value) {
     return { bytes: bytesToHex(value) };
   } else if (Array.isArray(value)) {
     return value.map(prepareTerm);
+  } else if (value instanceof Set) {
+    return { set: Array.from(value).map(prepareTerm) };
   } else if (typeof value.toDatalogParameter === "function") {
     return value.toDatalogParameter();
   } else {
@@ -57,8 +59,8 @@ function tagged(builder) {
         })
     );
 
-    console.log(code, termParameters, keyParameters);
-    return builder.addCodeWithParameters(code, termParameters, keyParameters);
+    builder.addCodeWithParameters(code, termParameters, keyParameters);
+    return builder;
   };
 }
 
@@ -73,7 +75,7 @@ export function block(strings, ...values) {
 }
 
 export function authorizer(strings, ...values) {
-  const builder = new Authorizer();
+  const builder = new AuthorizerBuilder();
   return tagged(builder)(strings, ...values);
 }
 

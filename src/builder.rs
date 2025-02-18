@@ -558,11 +558,12 @@ impl<'de> Visitor<'de> for TermVisitor {
         A: serde::de::MapAccess<'de>,
     {
         use serde::de::Error;
-        let (k, v): (String, String) = v
-            .next_entry()?
+        let k: String = v
+            .next_key()?
             .ok_or_else(|| Error::invalid_length(0, &self))?;
         match k.as_ref() {
             "date" => {
+                let v: String = v.next_value()?;
                 let ts = OffsetDateTime::parse(
                     v.as_ref(),
                     &time::format_description::well_known::Rfc3339,
@@ -575,13 +576,20 @@ impl<'de> Visitor<'de> for TermVisitor {
                 )))
             }
             "bytes" => {
+                let v: String = v.next_value()?;
                 let bytes = hex::decode(v)
                     .map_err(|_| Error::custom("expecting an hex-encoded byte array"))?;
                 Ok(Term(biscuit::builder::Term::Bytes(bytes)))
             }
+            "set" => {
+                let v: Vec<Term> = v.next_value()?;
+                Ok(Term(biscuit::builder::Term::Set(
+                    v.into_iter().map(|t| t.0).collect(),
+                )))
+            }
 
             _ => Err(Error::custom(format!(
-                "unexpected key: {}, expecting: date",
+                "unexpected key: {}, expecting date, bytes or set",
                 &k
             ))),
         }
@@ -591,12 +599,12 @@ impl<'de> Visitor<'de> for TermVisitor {
     where
         A: serde::de::SeqAccess<'de>,
     {
-        let mut set = BTreeSet::new();
+        let mut v = Vec::new();
         let mut e: Option<Term> = i.next_element()?;
         while e.is_some() {
-            set.insert(e.unwrap().0);
+            v.push(e.unwrap().0);
             e = i.next_element()?;
         }
-        Ok(Term(biscuit::builder::Term::Set(set)))
+        Ok(Term(biscuit::builder::Term::Array(v)))
     }
 }
