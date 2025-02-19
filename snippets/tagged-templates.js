@@ -22,6 +22,10 @@ export function prepareTerm(value) {
     return { set: Array.from(value).map(prepareTerm) };
   } else if (typeof value.toDatalogParameter === "function") {
     return value.toDatalogParameter();
+  } else if (value instanceof Map) {
+    return {
+      map: new Map(value.entries().map(([k, v]) => [k, prepareTerm(v)])),
+    };
   } else {
     return value;
   }

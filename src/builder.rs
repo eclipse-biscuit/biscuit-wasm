@@ -587,9 +587,17 @@ impl<'de> Visitor<'de> for TermVisitor {
                     v.into_iter().map(|t| t.0).collect(),
                 )))
             }
+            "map" => {
+                let v: HashMap<String, Term> = v.next_value()?;
+                Ok(Term(biscuit::builder::Term::Map(
+                    v.into_iter()
+                        .map(|(k, v)| (biscuit::builder::MapKey::Str(k), v.0))
+                        .collect(),
+                )))
+            }
 
             _ => Err(Error::custom(format!(
-                "unexpected key: {}, expecting date, bytes or set",
+                "unexpected key: {}, expecting date, bytes, set or map",
                 &k
             ))),
         }

@@ -164,6 +164,15 @@ test("parameter injection", function (t) {
     "set"
   );
 
+  t.equal(
+    fact`fact(${new Map([
+      ["a", 12],
+      ["b", true],
+    ])})`.toString(),
+    `fact({"a": 12, "b": true})`,
+    "map"
+  );
+
   let bytes = new Uint8Array(Buffer.from([0, 170, 187]));
   t.equal(fact`fact(${bytes})`.toString(), `fact(hex:00aabb)`, "byte array");
   let pubkey = PublicKey.fromString(
