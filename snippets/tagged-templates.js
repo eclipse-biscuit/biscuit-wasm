@@ -23,8 +23,13 @@ export function prepareTerm(value) {
   } else if (typeof value.toDatalogParameter === "function") {
     return value.toDatalogParameter();
   } else if (value instanceof Map) {
+    let map = new Map();
+    for (let [k, v] of value) {
+      map.set(prepareTerm(k), prepareTerm(v));
+    }
+
     return {
-      map: new Map(value.entries().map(([k, v]) => [k, prepareTerm(v)])),
+      map: map,
     };
   } else {
     return value;
