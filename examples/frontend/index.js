@@ -27,8 +27,7 @@ console.log(serializedToken);
 let parsedToken = Biscuit.fromBase64(serializedToken, root.getPublicKey());
 console.log("Parsed the token and verified its signatures with the public key");
 
-let auth = authorizer`allow if user(${id})`;
-auth.addToken(parsedToken);
+let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 
 let policy = auth.authorize();
 console.log("Authorized the token with the provided rules");

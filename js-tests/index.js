@@ -128,8 +128,7 @@ test("complete lifecycle", function(t) {
   let serializedToken = token.toBase64();
 
   let parsedToken = Biscuit.fromBase64(serializedToken, root.getPublicKey());
-  let auth = authorizer`allow if user(${id})`
-    .buildAuthenticated(parsedToken);
+  let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 
   let policy = auth.authorize();
   t.equal(policy, 0, "authorization suceeded");
