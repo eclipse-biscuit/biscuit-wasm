@@ -32,6 +32,7 @@ impl RunLimits {
 
 /// Creates a token
 #[wasm_bindgen]
+#[derive(Default)]
 pub struct AuthorizerBuilder(pub(crate) Option<biscuit::builder::AuthorizerBuilder>);
 
 #[wasm_bindgen]

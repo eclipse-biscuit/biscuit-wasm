@@ -72,7 +72,7 @@ impl PublicKey {
     /// Deserializes a public key from raw bytes
     #[wasm_bindgen(js_name = fromBytes)]
     pub fn from_bytes(data: &[u8]) -> Result<PublicKey, JsValue> {
-        let key = biscuit_auth::PublicKey::from_bytes(&data, Algorithm::Ed25519)
+        let key = biscuit_auth::PublicKey::from_bytes(data, Algorithm::Ed25519)
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PublicKey(key))
     }
@@ -164,7 +164,7 @@ impl PrivateKey {
     /// Deserializes a private key from raw bytes
     #[wasm_bindgen(js_name = fromBytes)]
     pub fn from_bytes(data: &[u8]) -> Result<PrivateKey, JsValue> {
-        let key = biscuit_auth::PrivateKey::from_bytes(&data, Algorithm::Ed25519)
+        let key = biscuit_auth::PrivateKey::from_bytes(data, Algorithm::Ed25519)
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PrivateKey(key))
     }
