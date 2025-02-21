@@ -53,7 +53,7 @@ let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 let policy = auth.authorizeWithLimits({
   max_facts: 10,
   max_iterations: 0,
-  max_time_micro: 100000
+  max_time_micro: 10000
 });
 console.log("Authorized the token with the provided rules");
 console.log("matched policy: " + policy);
@@ -61,17 +61,32 @@ console.log("matched policy: " + policy);
 let r1 = rule`u($id) <- user($id)`;
 console.log("The token authority block & authorization context can be queried:");
 console.log(r1.toString());
-let facts1 = auth.query(r1);
+let facts1 = auth.queryWithLimits(
+  r1, {
+  max_facts: 10,
+  max_iterations: 0,
+  max_time_micro: 10000
+});
 console.log(facts1.map(f => f.toString()));
 
 let r2 = rule`g($id) <- group($id)`;
 console.log(r2.toString());
 console.log("Blocks are not queried by default:");
-let facts2 = auth.query(r2);
+let facts2 = auth.queryWithLimits(
+  r2, {
+  max_facts: 10,
+  max_iterations: 0,
+  max_time_micro: 10000
+});
 console.log(facts2.map(f => f.toString()));
 
 let r3 = rule`g($id) <- group($id) trusting ${thirdPartyRoot.getPublicKey()}`;
 console.log("Third-party blocks can be queried by providing their public key");
 console.log(r3.toString());
-let facts3 = auth.query(r3);
+let facts3 = auth.queryWithLimits(
+  r3, {
+  max_facts: 10,
+  max_iterations: 0,
+  max_time_micro: 10000
+});
 console.log(facts3.map(f => f.toString()));
