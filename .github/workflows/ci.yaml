@@ -25,14 +25,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ hashFiles('Cargo.toml') }}
             ${{ runner.os }}-
-      - uses: jetli/wasm-pack-action@v0.4.0
-        name: Install wasm-pack
-        with:
-          version: 'latest'
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install wasm-pack
+        run: |
+          npm install -g wasm-pack
       - name: Run rust checks
         run: |
           cargo clippy -- -D warnings
