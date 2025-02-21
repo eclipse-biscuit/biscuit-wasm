@@ -53,7 +53,7 @@ let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 let policy = auth.authorizeWithLimits({
   max_facts: 10,
   max_iterations: 0,
-  max_time_micro: 100
+  max_time_micro: 100000
 });
 console.log("Authorized the token with the provided rules");
 console.log("matched policy: " + policy);
