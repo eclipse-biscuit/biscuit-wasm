@@ -34,7 +34,6 @@ test("keypair generation", function(t) {
 
 test("biscuit builder", function (t) {
   let userId = "1234";
-  console.log("a");
 
   let builder = biscuit`user(${userId});`
   builder.addFact(fact`fact(${userId})`);
