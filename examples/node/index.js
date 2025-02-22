@@ -68,6 +68,8 @@ let facts1 = auth.queryWithLimits(
   max_time_micro: 10000
 });
 console.log(facts1.map(f => f.toString()));
+let [queried_id] = facts1[0].terms();
+console.log(queried_id);
 
 let r2 = rule`g($id) <- group($id)`;
 console.log(r2.toString());

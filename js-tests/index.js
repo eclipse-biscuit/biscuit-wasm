@@ -139,6 +139,37 @@ test("complete lifecycle", function(t) {
   });
   t.equal(facts.length, 1, "correct number of query results");
   t.equal(facts[0].toString(), `u("1234")`, "correct query result");
+
+  let r2 = rule`test(1, "a", 2024-04-28T16:31:06Z, hex:00aabb, true, null, [2, 3, 4], { 1, 2, 1, 4}, {"a": "abc", "b": { "x": 12}}) <- true trusting authority, ${otherKeyPair.getPublicKey()}`;
+  let facts2 = auth.queryWithLimits(r2, {
+    max_time_micro: 100000,
+  });
+  t.equal(facts2.length, 1, "correct number of query results");
+  console.log(facts2[0].terms());
+  // fact terms can be destructured
+  const [num, str, date, bytes, boolean, nul, array, set, map] = facts2[0].terms();
+  t.equal(num, 1, );
+  t.equal(str, "a");
+  // why is the hour shifted by 2 hours?
+  t.equal(date.toISOString(), "2024-04-28T16:31:06.000Z");
+  t.equal(bytes[0], 0);
+  t.equal(bytes[1], 170);
+  t.equal(bytes[2], 187);
+  t.equal(boolean, true);
+  t.equal(nul, null);
+  t.equal(array[0], 2);
+  t.equal(array[1], 3);
+  t.equal(array[2], 4);
+  t.ok(set.has(1));
+  t.ok(set.has(2));
+  t.ok(set.has(4));
+  t.equal(map.get("a"), "abc")
+  t.equal(map.get("b").get("x"), 12)
+
+  t.equal(facts2[0].toString(), `test(1, "a", 2024-04-28T16:31:06Z, hex:00aabb, true, null, [2, 3, 4], {1, 2, 4}, {"a": "abc", "b": {"x": 12}})`, "correct query result");
+
+
+
   t.end();
 });
 

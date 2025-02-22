@@ -1,7 +1,7 @@
 use std::collections::{BTreeSet, HashMap};
 
-use biscuit_auth as biscuit;
-use js_sys::Array;
+use biscuit_auth::{self as biscuit, builder::MapKey};
+use js_sys::{Array, Date, Map, Set};
 use serde::{de::Visitor, Deserialize};
 use time::OffsetDateTime;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
@@ -301,6 +301,15 @@ impl Fact {
     pub fn to_string(&self) -> String {
         self.0.to_string()
     }
+
+    #[wasm_bindgen(js_name = terms)]
+    pub fn terms(&self) -> Array {
+        let array = Array::new();
+        for t in self.0.predicate.terms.iter() {
+            array.push(&term_to_js(t.clone()).unwrap());
+        }
+        array
+    }
 }
 
 #[wasm_bindgen]
@@ -504,6 +513,61 @@ fn js_to_term(value: JsValue) -> Result<biscuit::builder::Term, JsValue> {
     serde_wasm_bindgen::from_value(value)
         .map(|t: Term| t.0)
         .map_err(|e| serde_wasm_bindgen::to_value(&e.to_string()).unwrap())
+}
+
+fn term_to_js(value: biscuit::builder::Term) -> Result<JsValue, JsValue> {
+    Ok(match value {
+        biscuit::builder::Term::Integer(i) => JsValue::from_f64(i as f64),
+        biscuit::builder::Term::Str(s) => JsValue::from_str(&s),
+        biscuit::builder::Term::Date(d) => {
+            let date = OffsetDateTime::from_unix_timestamp(d as i64).unwrap();
+
+            // do not use the new_with_year_month_day_hr_min_sec constructor, it assumes local time
+            let d = Date::new(&JsValue::undefined());
+            d.set_utc_full_year_with_month_date(
+                date.year() as u32,
+                date.month() as i32 - 1,
+                date.day() as i32,
+            );
+            d.set_utc_hours(date.hour() as u32);
+            d.set_utc_minutes(date.minute() as u32);
+            d.set_utc_seconds(date.second() as u32);
+            JsValue::from(d)
+        }
+        biscuit::builder::Term::Bytes(items) => {
+            let array = Array::new();
+            for item in items {
+                array.push(&JsValue::from_f64(item as f64));
+            }
+            JsValue::from(array)
+        }
+        biscuit::builder::Term::Bool(b) => JsValue::from_bool(b),
+        biscuit::builder::Term::Set(btree_set) => {
+            let set = Set::new(&JsValue::undefined());
+            for t in btree_set {
+                set.add(&term_to_js(t).unwrap());
+            }
+            JsValue::from(set)
+        }
+        biscuit::builder::Term::Null => JsValue::NULL,
+        biscuit::builder::Term::Array(terms) => {
+            let array = Array::new();
+            for t in terms {
+                array.push(&term_to_js(t).unwrap());
+            }
+            JsValue::from(array)
+        }
+        biscuit::builder::Term::Map(btree_map) => {
+            let map = Map::new();
+            for (k, v) in btree_map {
+                let MapKey::Str(s) = k else { panic!() };
+                map.set(&JsValue::from_str(&s), &term_to_js(v).unwrap());
+            }
+            JsValue::from(map)
+        }
+        biscuit::builder::Term::Variable(v) => JsValue::from_str(&v),
+        biscuit::builder::Term::Parameter(p) => JsValue::from_str(&p),
+    })
 }
 
 pub struct Term(pub(crate) biscuit::builder::Term);
