@@ -13,14 +13,14 @@ import {
 } from "@biscuit-auth/biscuit-wasm";
 import { test } from "tape";
 // necessary for esm support, see https://docs.rs/getrandom/latest/getrandom/#nodejs-es-module-support
-import { webcrypto } from 'node:crypto'
+import { webcrypto } from "node:crypto";
 
 // this is not required anymore with node19+
 if (parseInt(process.version.match(/v(\d+)\.(\d+)\.(\d+)/)[1], 10) <= 18) {
-  globalThis.crypto = webcrypto
+  globalThis.crypto = webcrypto;
 }
 
-test("keypair generation", function(t) {
+test("keypair generation", function (t) {
   let pkStr =
     "76ac58cc933a3032d65e4d4faf99302fba381930486fd0ce1260654db25ca661";
   let pubStr =
@@ -35,7 +35,7 @@ test("keypair generation", function(t) {
 test("biscuit builder", function (t) {
   let userId = "1234";
 
-  let builder = biscuit`user(${userId});`
+  let builder = biscuit`user(${userId});`;
   builder.addFact(fact`fact(${userId})`);
   builder.addRule(rule`u($id) <- user($id, ${userId})`);
   builder.addCheck(check`check if check(${userId})`);
@@ -77,7 +77,7 @@ check if check("1234");
   t.end();
 });
 
-test("authorizer builder", function(t) {
+test("authorizer builder", function (t) {
   let userId = "1234";
   let builder = authorizer`allow if user(${userId});`;
   builder.addFact(fact`fact(${userId})`);
@@ -108,7 +108,7 @@ deny if true;
   t.end();
 });
 
-test("complete lifecycle", function(t) {
+test("complete lifecycle", function (t) {
   let pk = PrivateKey.fromString(
     "473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
   );
@@ -147,8 +147,9 @@ test("complete lifecycle", function(t) {
   t.equal(facts2.length, 1, "correct number of query results");
   console.log(facts2[0].terms());
   // fact terms can be destructured
-  const [num, str, date, bytes, boolean, nul, array, set, map] = facts2[0].terms();
-  t.equal(num, 1, );
+  const [num, str, date, bytes, boolean, nul, array, set, map] =
+    facts2[0].terms();
+  t.equal(num, 1);
   t.equal(str, "a");
   // why is the hour shifted by 2 hours?
   t.equal(date.toISOString(), "2024-04-28T16:31:06.000Z");
@@ -163,12 +164,14 @@ test("complete lifecycle", function(t) {
   t.ok(set.has(1));
   t.ok(set.has(2));
   t.ok(set.has(4));
-  t.equal(map.get("a"), "abc")
-  t.equal(map.get("b").get("x"), 12)
+  t.equal(map.get("a"), "abc");
+  t.equal(map.get("b").get("x"), 12);
 
-  t.equal(facts2[0].toString(), `test(1, "a", 2024-04-28T16:31:06Z, hex:00aabb, true, null, [2, 3, 4], {1, 2, 4}, {"a": "abc", "b": {"x": 12}})`, "correct query result");
-
-
+  t.equal(
+    facts2[0].toString(),
+    `test(1, "a", 2024-04-28T16:31:06Z, hex:00aabb, true, null, [2, 3, 4], {1, 2, 4}, {"a": "abc", "b": {"x": 12}})`,
+    "correct query result"
+  );
 
   t.end();
 });
@@ -237,7 +240,7 @@ check if true trusting authority, ed25519/41e77e842e5c952a29233992dc8ebbedd2d832
   t.end();
 });
 
-test("third-party blocks", function(t) {
+test("third-party blocks", function (t) {
   let pk = PrivateKey.fromString(
     "473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
   );
@@ -255,7 +258,9 @@ test("third-party blocks", function(t) {
     biscuitBuilder.addFact(fact`right(${right})`);
   }
 
-  biscuitBuilder.addCheck(check`check if group("admin") trusting ${thirdPartyRoot.getPublicKey()}`);
+  biscuitBuilder.addCheck(
+    check`check if group("admin") trusting ${thirdPartyRoot.getPublicKey()}`
+  );
 
   let token = biscuitBuilder
     .build(root.getPrivateKey()) // biscuit token
@@ -263,7 +268,8 @@ test("third-party blocks", function(t) {
 
   let thirdPartyRequest = token.getThirdPartyRequest();
   let thirdPartyBlock = thirdPartyRequest.createBlock(
-    thirdPartyPk, block`group("admin");`
+    thirdPartyPk,
+    block`group("admin");`
   );
 
   token = token.appendThirdPartyBlock(
@@ -281,7 +287,7 @@ test("third-party blocks", function(t) {
 
   let r1 = rule`g($group) <- group($group) trusting ${thirdPartyRoot.getPublicKey()}`;
   let facts = auth.queryWithLimits(r1, {
-    max_time_micro: 100000
+    max_time_micro: 100000,
   });
   t.equal(facts.length, 1, "correct number of query results");
   t.equal(facts[0].toString(), `g("admin")`, "correct query result");
