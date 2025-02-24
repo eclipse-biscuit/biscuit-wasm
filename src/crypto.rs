@@ -59,14 +59,14 @@ impl PublicKey {
 
     /// Serializes a public key to a hexadecimal string
     #[wasm_bindgen(js_name = toString)]
-    pub fn to_hex(&self) -> String {
-        hex::encode(self.0.to_bytes())
+    pub fn to_string(&self) -> String {
+        self.0.to_string()
     }
 
     /// Serializes a public key to a string usable as a datalog parameter
     #[wasm_bindgen(js_name = toDatalogParameter)]
     pub fn to_datalog_parameter(&self) -> String {
-        format!("ed25519/{}", self.to_hex())
+        self.to_string()
     }
 
     /// Deserializes a public key from raw bytes

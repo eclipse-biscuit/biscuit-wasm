@@ -24,7 +24,7 @@ test("keypair generation", function (t) {
   let pkStr =
     "76ac58cc933a3032d65e4d4faf99302fba381930486fd0ce1260654db25ca661";
   let pubStr =
-    "9d0b36243c1dd2ceec188b81e798c6a7f2954fc02bd4c3913eb1885a2999278b";
+    "ed25519/9d0b36243c1dd2ceec188b81e798c6a7f2954fc02bd4c3913eb1885a2999278b";
   let pk = PrivateKey.fromString(pkStr);
   let root = KeyPair.fromPrivateKey(pk);
   t.equal(root.getPrivateKey().toString(), pkStr, "private key roundtrip");
@@ -121,12 +121,19 @@ test("complete lifecycle", function (t) {
     biscuitBuilder.addFact(fact`right(${right})`);
   }
 
+  biscuitBuilder.setRootKeyId(1234);
   let token = biscuitBuilder
     .build(root.getPrivateKey()) // biscuit token
     .appendBlock(block`check if user($u)`); // attenuated biscuit token
   let serializedToken = token.toBase64();
 
-  let parsedToken = Biscuit.fromBase64(serializedToken, root.getPublicKey());
+  let parsedToken = Biscuit.fromBase64WithProvider(serializedToken, function(key_id) {
+    if (key_id === 1234) {
+      console.log("key", root.getPublicKey().toString());
+      return root.getPublicKey().toString();
+    }
+    throw new Error("Unknown key id: " + key_id);
+  });
   let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 
   let policy = auth.authorize();

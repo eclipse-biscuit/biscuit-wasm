@@ -1,6 +1,8 @@
 // we need an explicitly defined `to_string`, and `from_str` methods
 // so that we can expose them to JS with a proper name.
 #![allow(clippy::inherent_to_string, clippy::should_implement_trait)]
+use std::str::FromStr;
+
 use biscuit_auth as biscuit;
 use wasm_bindgen::prelude::*;
 
@@ -83,6 +85,17 @@ impl Biscuit {
         ))
     }
 
+    #[wasm_bindgen(js_name = fromBytesWithProvider)]
+    pub fn from_bytes_with_provider(
+        data: &[u8],
+        provider: &js_sys::Function,
+    ) -> Result<Biscuit, JsValue> {
+        Ok(Biscuit(
+            biscuit::Biscuit::from(data, KeyProvider::new(provider))
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
     /// Deserializes a token from URL safe base 64 data
     ///
     /// This will check the signature using the root key
@@ -90,6 +103,17 @@ impl Biscuit {
     pub fn from_base64(data: &str, root: &PublicKey) -> Result<Biscuit, JsValue> {
         Ok(Biscuit(
             biscuit::Biscuit::from_base64(data, root.0)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
+    #[wasm_bindgen(js_name = fromBase64WithProvider)]
+    pub fn from_base64_with_provider(
+        data: &str,
+        provider: &js_sys::Function,
+    ) -> Result<Biscuit, JsValue> {
+        Ok(Biscuit(
+            biscuit::Biscuit::from_base64(data, KeyProvider::new(provider))
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
     }
@@ -273,6 +297,30 @@ impl ThirdPartyBlock {
         self.0
             .serialize_base64()
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    }
+}
+
+struct KeyProvider<'a> {
+    f: &'a js_sys::Function,
+}
+
+impl<'a> KeyProvider<'a> {
+    pub fn new(func: &'a js_sys::Function) -> Self {
+        Self { f: func }
+    }
+}
+
+impl biscuit::RootKeyProvider for KeyProvider<'_> {
+    fn choose(&self, key_id: Option<u32>) -> Result<biscuit::PublicKey, biscuit::error::Format> {
+        let v = match key_id {
+            Some(v) => JsValue::from(v),
+            None => JsValue::NULL,
+        };
+        let v = self.f.call1(&JsValue::NULL, &v).unwrap();
+        let s = v.as_string().ok_or(biscuit::error::Format::InvalidKey(
+            "key provider returned non-string value".to_string(),
+        ))?;
+        biscuit::PublicKey::from_str(&s)
     }
 }
 
