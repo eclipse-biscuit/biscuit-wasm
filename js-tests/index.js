@@ -10,6 +10,7 @@ import {
   KeyPair,
   PrivateKey,
   PublicKey,
+  SignatureAlgorithm,
 } from "@biscuit-auth/biscuit-wasm";
 import { test } from "tape";
 // necessary for esm support, see https://docs.rs/getrandom/latest/getrandom/#nodejs-es-module-support
@@ -29,6 +30,36 @@ test("keypair generation", function (t) {
   let root = KeyPair.fromPrivateKey(pk);
   t.equal(root.getPrivateKey().toString(), pkStr, "private key roundtrip");
   t.equal(root.getPublicKey().toString(), pubStr, "public key generation");
+  t.end();
+});
+
+test("ECDSA keypair generation", function (t) {
+  let kp = new KeyPair(SignatureAlgorithm.Secp256r1);
+  console.log(kp.getPublicKey().toString());
+  t.ok(kp.getPublicKey().toString().startsWith("secp256r1/"), "public key prefix");
+
+  let kp2 = new KeyPair(SignatureAlgorithm.Ed25519);
+  console.log(kp2.getPublicKey().toString());
+  t.ok(kp2.getPublicKey().toString().startsWith("ed25519/"), "public key prefix");
+
+  let kp3 = new KeyPair();
+  console.log(kp3.getPublicKey().toString());
+  t.ok(kp3.getPublicKey().toString().startsWith("ed25519/"), "public key prefix");
+  
+  let id = "1234";
+  let biscuitBuilder = biscuit`user(${id});`;
+
+  biscuitBuilder.setRootKeyId(1234);
+  let token = biscuitBuilder
+    .build(kp.getPrivateKey()) // biscuit token
+    .appendBlock(block`check if user($u)`);
+  let serializedToken = token.toBase64();
+
+  let parsedToken = Biscuit.fromBase64(serializedToken, kp.getPublicKey());
+  let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
+
+  let policy = auth.authorize();
+  t.equal(policy, 0, "authorization suceeded");
   t.end();
 });
 

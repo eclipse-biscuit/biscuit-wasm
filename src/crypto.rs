@@ -10,9 +10,10 @@ pub struct KeyPair(pub(crate) biscuit::KeyPair);
 #[wasm_bindgen]
 impl KeyPair {
     #[wasm_bindgen(constructor)]
-    pub fn new_ed25519() -> KeyPair {
+    pub fn new(algorithm: SignatureAlgorithm) -> KeyPair {
         let mut rng = make_rng();
-        KeyPair(biscuit::KeyPair::new_with_rng(Algorithm::Ed25519, &mut rng))
+
+        KeyPair(biscuit::KeyPair::new_with_rng(algorithm.into(), &mut rng))
     }
 
     #[wasm_bindgen(js_name = fromPrivateKey)]
@@ -33,7 +34,7 @@ impl KeyPair {
 
 impl Default for KeyPair {
     fn default() -> Self {
-        Self::new_ed25519()
+        Self::new(SignatureAlgorithm::Ed25519)
     }
 }
 
@@ -71,15 +72,15 @@ impl PublicKey {
 
     /// Deserializes a public key from raw bytes
     #[wasm_bindgen(js_name = fromBytes)]
-    pub fn from_bytes(data: &[u8]) -> Result<PublicKey, JsValue> {
-        let key = biscuit_auth::PublicKey::from_bytes(data, Algorithm::Ed25519)
+    pub fn from_bytes(data: &[u8], algorithm: SignatureAlgorithm) -> Result<PublicKey, JsValue> {
+        let key = biscuit_auth::PublicKey::from_bytes(data, algorithm.into())
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PublicKey(key))
     }
 
     /// Deserializes a public key from a hexadecimal string
     #[wasm_bindgen(js_name = fromString)]
-    pub fn from_hex(data: &str) -> Result<PublicKey, JsValue> {
+    pub fn from_hex(data: &str, algorithm: SignatureAlgorithm) -> Result<PublicKey, JsValue> {
         let data = hex::decode(data).map_err(|e| {
             serde_wasm_bindgen::to_value(&biscuit::error::Token::Format(
                 biscuit::error::Format::InvalidKey(format!(
@@ -89,7 +90,7 @@ impl PublicKey {
             ))
             .unwrap()
         })?;
-        let key = biscuit_auth::PublicKey::from_bytes(&data, Algorithm::Ed25519)
+        let key = biscuit_auth::PublicKey::from_bytes(&data, algorithm.into())
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PublicKey(key))
     }
@@ -125,12 +126,19 @@ impl Visitor<'_> for PublicKeyVisitor {
         E: serde::de::Error,
     {
         match s.strip_prefix("ed25519/") {
-            None => Err(E::custom(
-                "expected a public key of the format `ed25519/<hex>`".to_string(),
-            )),
             Some(s) => match biscuit::PublicKey::from_bytes_hex(s, Algorithm::Ed25519) {
                 Ok(pk) => Ok(PublicKey(pk)),
                 Err(e) => Err(E::custom(format!("could not parse public key: {}", e))),
+            },
+            None => match s.strip_prefix("secp256r1/") {
+                Some(s) => match biscuit::PublicKey::from_bytes_hex(s, Algorithm::Secp256r1) {
+                    Ok(pk) => Ok(PublicKey(pk)),
+                    Err(e) => Err(E::custom(format!("could not parse public key: {}", e))),
+                },
+                None => Err(E::custom(
+                    "expected a public key of the format `ed25519/<hex>` or `secp256r1/<hex>`"
+                        .to_string(),
+                )),
             },
         }
     }
@@ -163,15 +171,15 @@ impl PrivateKey {
 
     /// Deserializes a private key from raw bytes
     #[wasm_bindgen(js_name = fromBytes)]
-    pub fn from_bytes(data: &[u8]) -> Result<PrivateKey, JsValue> {
-        let key = biscuit_auth::PrivateKey::from_bytes(data, Algorithm::Ed25519)
+    pub fn from_bytes(data: &[u8], algorithm: SignatureAlgorithm) -> Result<PrivateKey, JsValue> {
+        let key = biscuit_auth::PrivateKey::from_bytes(data, algorithm.into())
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PrivateKey(key))
     }
 
     /// Deserializes a private key from a hexadecimal string
     #[wasm_bindgen(js_name = fromString)]
-    pub fn from_hex(data: &str) -> Result<PrivateKey, JsValue> {
+    pub fn from_hex(data: &str, algorithm: SignatureAlgorithm) -> Result<PrivateKey, JsValue> {
         let data = hex::decode(data).map_err(|e| {
             serde_wasm_bindgen::to_value(&biscuit::error::Token::Format(
                 biscuit::error::Format::InvalidKey(format!(
@@ -181,9 +189,26 @@ impl PrivateKey {
             ))
             .unwrap()
         })?;
-        let key = biscuit_auth::PrivateKey::from_bytes(&data, Algorithm::Ed25519)
+        let key = biscuit_auth::PrivateKey::from_bytes(&data, algorithm.into())
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PrivateKey(key))
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Default)]
+pub enum SignatureAlgorithm {
+    #[default]
+    Ed25519,
+    Secp256r1,
+}
+
+impl From<SignatureAlgorithm> for Algorithm {
+    fn from(algorithm: SignatureAlgorithm) -> Self {
+        match algorithm {
+            SignatureAlgorithm::Ed25519 => Algorithm::Ed25519,
+            SignatureAlgorithm::Secp256r1 => Algorithm::Secp256r1,
+        }
     }
 }
 
