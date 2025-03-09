@@ -1,7 +1,6 @@
 // we need an explicitly defined `to_string`, and `from_str` methods
 // so that we can expose them to JS with a proper name.
 #![allow(clippy::inherent_to_string, clippy::should_implement_trait)]
-use std::str::FromStr;
 
 use biscuit_auth as biscuit;
 use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
