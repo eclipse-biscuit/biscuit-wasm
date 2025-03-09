@@ -59,7 +59,7 @@ export function middleware(options) {
         try {
           const token = tokenParser(serializedToken, publicKey);
           try {
-            let authorizerBuilder = new Authorizer();
+            let authorizerBuilder = new AuthorizerBuilder();
             applyAuthorizerBuilder(authorizerBuilder, priorityAuthorizer, req);
             applyAuthorizerBuilder(authorizerBuilder, makeAuthorizer, req);
             applyAuthorizerBuilder(authorizerBuilder, fallbackAuthorizer, req);
