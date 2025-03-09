@@ -18,7 +18,6 @@ Add this dependency to your `package.json`:
 
 Usage examples are available [here](https://doc.biscuitsec.org/usage/nodejs).
 
-
 ### Node
 
 _see the example code in examples/node_

@@ -36,22 +36,31 @@ test("keypair generation", function (t) {
 test("ECDSA keypair generation", function (t) {
   let kp = new KeyPair(SignatureAlgorithm.Secp256r1);
   console.log(kp.getPublicKey().toString());
-  t.ok(kp.getPublicKey().toString().startsWith("secp256r1/"), "public key prefix");
+  t.ok(
+    kp.getPublicKey().toString().startsWith("secp256r1/"),
+    "public key prefix"
+  );
 
   let kp2 = new KeyPair(SignatureAlgorithm.Ed25519);
   console.log(kp2.getPublicKey().toString());
-  t.ok(kp2.getPublicKey().toString().startsWith("ed25519/"), "public key prefix");
+  t.ok(
+    kp2.getPublicKey().toString().startsWith("ed25519/"),
+    "public key prefix"
+  );
 
   let kp3 = new KeyPair();
   console.log(kp3.getPublicKey().toString());
-  t.ok(kp3.getPublicKey().toString().startsWith("ed25519/"), "public key prefix");
-  
+  t.ok(
+    kp3.getPublicKey().toString().startsWith("ed25519/"),
+    "public key prefix"
+  );
+
   let id = "1234";
   let biscuitBuilder = biscuit`user(${id});`;
 
   biscuitBuilder.setRootKeyId(1234);
   let token = biscuitBuilder
-    .build(kp.getPrivateKey()) // biscuit token
+    .build(kp.getPrivateKey())
     .appendBlock(block`check if user($u)`);
   let serializedToken = token.toBase64();
 
@@ -71,7 +80,6 @@ test("biscuit builder", function (t) {
   builder.addRule(rule`u($id) <- user($id, ${userId})`);
   builder.addCheck(check`check if check(${userId})`);
   builder.setRootKeyId(1234);
-  console.log("b");
   t.equal(
     builder.toString(),
     `// root key id: 1234
@@ -158,13 +166,16 @@ test("complete lifecycle", function (t) {
     .appendBlock(block`check if user($u)`); // attenuated biscuit token
   let serializedToken = token.toBase64();
 
-  let parsedToken = Biscuit.fromBase64WithProvider(serializedToken, function(key_id) {
-    if (key_id === 1234) {
-      console.log("key", root.getPublicKey().toString());
-      return root.getPublicKey().toString();
+  let parsedToken = Biscuit.fromBase64WithProvider(
+    serializedToken,
+    function (key_id) {
+      if (key_id === 1234) {
+        console.log("key", root.getPublicKey().toString());
+        return root.getPublicKey().toString();
+      }
+      throw new Error("Unknown key id: " + key_id);
     }
-    throw new Error("Unknown key id: " + key_id);
-  });
+  );
   let auth = authorizer`allow if user(${id})`.buildAuthenticated(parsedToken);
 
   let policy = auth.authorize();
@@ -189,7 +200,6 @@ test("complete lifecycle", function (t) {
     facts2[0].terms();
   t.equal(num, 1);
   t.equal(str, "a");
-  // why is the hour shifted by 2 hours?
   t.equal(date.toISOString(), "2024-04-28T16:31:06.000Z");
   t.equal(bytes[0], 0);
   t.equal(bytes[1], 170);
@@ -211,6 +221,16 @@ test("complete lifecycle", function (t) {
     "correct query result"
   );
 
+  // test with nested maps and arrays
+  let r3 = rule`test({"a": "abc", "b": [{"x": 12}, {"y": "xyz"}, {"z": [{ "a": "b" }, {"a": "c"}]}]}) <- true`;
+  let facts3 = auth.queryWithLimits(r3, {
+    max_time_micro: 100000,
+  });
+  t.equal(
+    facts3[0].toString(),
+    `test({"a": "abc", "b": [{"x": 12}, {"y": "xyz"}, {"z": [{"a": "b"}, {"a": "c"}]}]})`,
+    "correct query result"
+  );
   t.end();
 });
 
