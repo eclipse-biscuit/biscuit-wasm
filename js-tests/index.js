@@ -23,7 +23,7 @@ if (parseInt(process.version.match(/v(\d+)\.(\d+)\.(\d+)/)[1], 10) <= 18) {
 
 test("keypair generation", function (t) {
   let pkStr =
-    "76ac58cc933a3032d65e4d4faf99302fba381930486fd0ce1260654db25ca661";
+    "ed25519/76ac58cc933a3032d65e4d4faf99302fba381930486fd0ce1260654db25ca661";
   let pubStr =
     "ed25519/9d0b36243c1dd2ceec188b81e798c6a7f2954fc02bd4c3913eb1885a2999278b";
   let pk = PrivateKey.fromString(pkStr);
@@ -83,7 +83,7 @@ check if check("1234");
     "builder roundtrip"
   );
   let pkStr =
-    "76ac58cc933a3032d65e4d4faf99302fba381930486fd0ce1260654db25ca661";
+    "ed25519/76ac58cc933a3032d65e4d4faf99302fba381930486fd0ce1260654db25ca661";
   let pk = PrivateKey.fromString(pkStr);
   builder.build(pk);
   t.pass("building biscuit");
@@ -141,7 +141,7 @@ deny if true;
 
 test("complete lifecycle", function (t) {
   let pk = PrivateKey.fromString(
-    "473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
+    "ed25519/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
   );
   let root = KeyPair.fromPrivateKey(pk);
 
@@ -280,12 +280,12 @@ check if true trusting authority, ed25519/41e77e842e5c952a29233992dc8ebbedd2d832
 
 test("third-party blocks", function (t) {
   let pk = PrivateKey.fromString(
-    "473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
+    "ed25519/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
   );
   let root = KeyPair.fromPrivateKey(pk);
 
   let thirdPartyPk = PrivateKey.fromString(
-    "39c657dbd3f68b09bc8e5fd9887c7cb47a91d1d3883ffbc495ca790552398a92"
+    "ed25519/39c657dbd3f68b09bc8e5fd9887c7cb47a91d1d3883ffbc495ca790552398a92"
   );
   let thirdPartyRoot = KeyPair.fromPrivateKey(thirdPartyPk);
 

@@ -166,7 +166,14 @@ impl PrivateKey {
     /// Serializes a private key to a hexadecimal string
     #[wasm_bindgen(js_name = toString)]
     pub fn to_hex(&self) -> String {
-        hex::encode(self.0.to_bytes())
+        match self.0.algorithm() {
+            biscuit_auth::format::schema::public_key::Algorithm::Ed25519 => {
+                format!("ed25519/{}", hex::encode(self.0.to_bytes()))
+            }
+            biscuit_auth::format::schema::public_key::Algorithm::Secp256r1 => {
+                format!("secp256r1/{}", hex::encode(self.0.to_bytes()))
+            }
+        }
     }
 
     /// Deserializes a private key from raw bytes
@@ -179,8 +186,22 @@ impl PrivateKey {
 
     /// Deserializes a private key from a hexadecimal string
     #[wasm_bindgen(js_name = fromString)]
-    pub fn from_hex(data: &str, algorithm: SignatureAlgorithm) -> Result<PrivateKey, JsValue> {
-        let data = hex::decode(data).map_err(|e| {
+    pub fn from_hex(data: &str) -> Result<PrivateKey, JsValue> {
+        let (algorithm, hex_str) = if let Some(hex) = data.strip_prefix("ed25519/") {
+            (Algorithm::Ed25519, hex)
+        } else if let Some(hex) = data.strip_prefix("secp256r1/") {
+            (Algorithm::Secp256r1, hex)
+        } else {
+            return Err(serde_wasm_bindgen::to_value(&biscuit::error::Token::Format(
+                biscuit::error::Format::InvalidKey(
+                    "expected a private key of the format `ed25519/<hex>` or `secp256r1/<hex>`"
+                        .to_string(),
+                ),
+            ))
+            .unwrap());
+        };
+
+        let data = hex::decode(hex_str).map_err(|e| {
             serde_wasm_bindgen::to_value(&biscuit::error::Token::Format(
                 biscuit::error::Format::InvalidKey(format!(
                     "could not deserialize hex encoded key: {}",
@@ -189,7 +210,7 @@ impl PrivateKey {
             ))
             .unwrap()
         })?;
-        let key = biscuit_auth::PrivateKey::from_bytes(&data, algorithm.into())
+        let key = biscuit_auth::PrivateKey::from_bytes(&data, algorithm)
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
         Ok(PrivateKey(key))
     }
