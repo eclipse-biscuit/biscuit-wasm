@@ -18,7 +18,7 @@ if (parseInt(process.version.match(/v(\d+)\.(\d+)\.(\d+)/)[1], 10) <= 18) {
 }
 
 let pk = PrivateKey.fromString(
-  "473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
+  "ed25519/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
 );
 let root = KeyPair.fromPrivateKey(pk);
 
