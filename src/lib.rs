@@ -4,7 +4,7 @@
 use std::str::FromStr;
 
 use biscuit_auth as biscuit;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{convert::TryFromJsValue, prelude::*};
 
 mod authorizer;
 mod builder;
@@ -317,10 +317,8 @@ impl biscuit::RootKeyProvider for KeyProvider<'_> {
             None => JsValue::NULL,
         };
         let v = self.f.call1(&JsValue::NULL, &v).unwrap();
-        let s = v.as_string().ok_or(biscuit::error::Format::InvalidKey(
-            "key provider returned non-string value".to_string(),
-        ))?;
-        biscuit::PublicKey::from_str(&s)
+        let pubkey = PublicKey::try_from_js_value(v).unwrap();
+        Ok(pubkey.0)
     }
 }
 

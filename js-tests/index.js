@@ -171,7 +171,7 @@ test("complete lifecycle", function (t) {
     function (key_id) {
       if (key_id === 1234) {
         console.log("key", root.getPublicKey().toString());
-        return root.getPublicKey().toString();
+        return root.getPublicKey();
       }
       throw new Error("Unknown key id: " + key_id);
     }
