@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 
-biscuit-auth = { version = "6.0.0-beta.2", features = ["wasm", "serde-error"] }
+biscuit-auth = { version = "6.0.0-beta.3", features = ["wasm", "serde-error"] }
 console_error_panic_hook = "0.1.7"
 hex = "0.4.3"
 rand = "0.8"

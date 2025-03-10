@@ -12,7 +12,7 @@ import {
 let keypair = new KeyPair();
 
 let pk = PrivateKey.fromString(
-  "ed25519/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
+  "ed25519-private/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
 );
 let root = KeyPair.fromPrivateKey(pk);
 

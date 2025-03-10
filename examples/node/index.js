@@ -32,7 +32,7 @@ for (let right of ["read", "write"]) {
 }
 
 let thirdPartyPk = PrivateKey.fromString(
-  "ed25519/39c657dbd3f68b09bc8e5fd9887c7cb47a91d1d3883ffbc495ca790552398a92"
+  "ed25519-private/39c657dbd3f68b09bc8e5fd9887c7cb47a91d1d3883ffbc495ca790552398a92"
 );
 let thirdPartyRoot = KeyPair.fromPrivateKey(thirdPartyPk);
 biscuitBuilder.addCheck(
