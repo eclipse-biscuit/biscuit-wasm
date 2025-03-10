@@ -168,10 +168,10 @@ impl PrivateKey {
     pub fn to_hex(&self) -> String {
         match self.0.algorithm() {
             biscuit_auth::format::schema::public_key::Algorithm::Ed25519 => {
-                format!("ed25519/{}", hex::encode(self.0.to_bytes()))
+                format!("ed25519-private/{}", hex::encode(self.0.to_bytes()))
             }
             biscuit_auth::format::schema::public_key::Algorithm::Secp256r1 => {
-                format!("secp256r1/{}", hex::encode(self.0.to_bytes()))
+                format!("secp256r1-private/{}", hex::encode(self.0.to_bytes()))
             }
         }
     }
@@ -187,14 +187,14 @@ impl PrivateKey {
     /// Deserializes a private key from a hexadecimal string
     #[wasm_bindgen(js_name = fromString)]
     pub fn from_hex(data: &str) -> Result<PrivateKey, JsValue> {
-        let (algorithm, hex_str) = if let Some(hex) = data.strip_prefix("ed25519/") {
+        let (algorithm, hex_str) = if let Some(hex) = data.strip_prefix("ed25519-private/") {
             (Algorithm::Ed25519, hex)
-        } else if let Some(hex) = data.strip_prefix("secp256r1/") {
+        } else if let Some(hex) = data.strip_prefix("secp256r1-private/") {
             (Algorithm::Secp256r1, hex)
         } else {
             return Err(serde_wasm_bindgen::to_value(&biscuit::error::Token::Format(
                 biscuit::error::Format::InvalidKey(
-                    "expected a private key of the format `ed25519/<hex>` or `secp256r1/<hex>`"
+                    "expected a private key of the format `ed25519-private/<hex>` or `secp256r1-private/<hex>`"
                         .to_string(),
                 ),
             ))
