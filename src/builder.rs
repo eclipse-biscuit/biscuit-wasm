@@ -154,6 +154,7 @@ impl Default for BiscuitBuilder {
 
 /// Creates a block to attenuate a token
 #[wasm_bindgen]
+#[derive(Clone)]
 pub struct BlockBuilder(pub(crate) Option<biscuit::builder::BlockBuilder>);
 
 #[wasm_bindgen]

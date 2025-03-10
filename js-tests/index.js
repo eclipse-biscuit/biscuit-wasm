@@ -123,8 +123,8 @@ test("authorizer builder", function (t) {
   builder.addRule(rule`u($id) <- user($id, ${userId})`);
   builder.addCheck(check`check if check(${userId})`);
   builder.addPolicy(policy`allow if check(${userId})`);
-  builder.addCheck(check`check if true`);
-  builder.addPolicy(policy`deny if true`);
+  builder.mergeBlock(block`check if true`);
+  builder.merge(authorizer`deny if true`);
 
   // todo maybe the authorizer builder should have a toString
   // implementation that behaves more like the ones from

@@ -5,7 +5,7 @@ use serde::Deserialize;
 use std::time::Duration;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
-use crate::{Biscuit, Check, Fact, Policy, PublicKey, Rule, Term};
+use crate::{Biscuit, BlockBuilder, Check, Fact, Policy, PublicKey, Rule, Term};
 
 #[derive(Deserialize)]
 pub struct RunLimits {
@@ -32,7 +32,7 @@ impl RunLimits {
 
 /// Creates a token
 #[wasm_bindgen]
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct AuthorizerBuilder(pub(crate) Option<biscuit::builder::AuthorizerBuilder>);
 
 #[wasm_bindgen]
@@ -112,6 +112,22 @@ impl AuthorizerBuilder {
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         );
         Ok(())
+    }
+
+    /// Merges the contents of another authorizer
+    #[wasm_bindgen(js_name = merge)]
+    pub fn merge(&mut self, other: &AuthorizerBuilder) {
+        let this = self.0.take().expect("empty AuthorizerBuilder");
+        let other = other.to_owned().0.take().expect("empty AuthorizerBuilder");
+        self.0 = Some(this.merge(other));
+    }
+
+    /// Merges the contents of a block builder
+    #[wasm_bindgen(js_name = mergeBlock)]
+    pub fn merge_block(&mut self, other: &BlockBuilder) {
+        let this = self.0.take().expect("empty AuthorizerBuilder");
+        let other = other.to_owned().0.take().expect("empty BlockBuilder");
+        self.0 = Some(this.merge_block(other));
     }
 
     /// Adds a code block
