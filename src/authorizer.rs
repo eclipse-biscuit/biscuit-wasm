@@ -30,84 +30,120 @@ impl RunLimits {
     }
 }
 
-/// The Authorizer verifies a request according to its policies and the provided token
+/// Creates a token
 #[wasm_bindgen]
-//#[derive(Default)]
-pub struct Authorizer(pub(crate) biscuit::Authorizer);
+#[derive(Default, Clone)]
+pub struct AuthorizerBuilder(pub(crate) Option<biscuit::builder::AuthorizerBuilder>);
 
 #[wasm_bindgen]
-impl Authorizer {
+impl AuthorizerBuilder {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Authorizer {
-        Authorizer(biscuit::Authorizer::new())
+    pub fn new() -> AuthorizerBuilder {
+        AuthorizerBuilder(Some(biscuit::builder::AuthorizerBuilder::new()))
     }
 
-    #[wasm_bindgen(js_name = addToken)]
-    pub fn add_token(&mut self, token: &Biscuit) -> Result<(), JsValue> {
-        self.0
-            .add_token(&token.0)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+    #[wasm_bindgen(js_name = buildAuthenticated)]
+    pub fn build(self, token: &Biscuit) -> Result<Authorizer, JsValue> {
+        Ok(Authorizer(
+            self.0
+                .expect("empty AuthorizerBuilder")
+                .build(&token.0)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
+    #[wasm_bindgen(js_name = buildUnauthenticated)]
+    pub fn build_unauthenticated(self) -> Result<Authorizer, JsValue> {
+        Ok(Authorizer(
+            self.0
+                .expect("empty AuthorizerBuilder")
+                .build_unauthenticated()
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
     }
 
     /// Adds a Datalog fact
     #[wasm_bindgen(js_name = addFact)]
     pub fn add_fact(&mut self, fact: &Fact) -> Result<(), JsValue> {
-        self.0
-            .add_fact(fact.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .fact(fact.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        );
+        Ok(())
     }
 
     /// Adds a Datalog rule
     #[wasm_bindgen(js_name = addRule)]
     pub fn add_rule(&mut self, rule: &Rule) -> Result<(), JsValue> {
-        self.0
-            .add_rule(rule.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .rule(rule.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        );
+        Ok(())
     }
 
-    /// Adds a check
-    ///
-    /// All checks, from authorizer and token, must be validated to authorize the request
+    /// Adds a Datalog check
     #[wasm_bindgen(js_name = addCheck)]
     pub fn add_check(&mut self, check: &Check) -> Result<(), JsValue> {
-        self.0
-            .add_check(check.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .check(check.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        );
+        Ok(())
     }
 
     /// Adds a policy
-    ///
-    /// The authorizer will test all policies in order of addition and stop at the first one that
-    /// matches. If it is a "deny" policy, the request fails, while with an "allow" policy, it will
-    /// succeed
     #[wasm_bindgen(js_name = addPolicy)]
     pub fn add_policy(&mut self, policy: &Policy) -> Result<(), JsValue> {
-        self.0
-            .add_policy(policy.0.clone())
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .policy(policy.0.clone())
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        );
+        Ok(())
     }
 
     /// Merges the contents of another authorizer
     #[wasm_bindgen(js_name = merge)]
-    pub fn merge(&mut self, other: &Authorizer) {
-        self.0.merge(other.0.clone())
+    pub fn merge(&mut self, other: &AuthorizerBuilder) {
+        let this = self.0.take().expect("empty AuthorizerBuilder");
+        let other = other.to_owned().0.take().expect("empty AuthorizerBuilder");
+        self.0 = Some(this.merge(other));
     }
 
     /// Merges the contents of a block builder
     #[wasm_bindgen(js_name = mergeBlock)]
     pub fn merge_block(&mut self, other: &BlockBuilder) {
-        self.0.merge_block(other.0.clone())
+        let this = self.0.take().expect("empty AuthorizerBuilder");
+        let other = other.to_owned().0.take().expect("empty BlockBuilder");
+        self.0 = Some(this.merge_block(other));
     }
 
-    /// Adds facts, rules, checks and policies as one code block
+    /// Adds a code block
     #[wasm_bindgen(js_name = addCode)]
     pub fn add_code(&mut self, source: &str) -> Result<(), JsValue> {
-        self.0
-            .add_code(source)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .code(source)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        );
+        Ok(())
     }
 
-    /// Adds facts, rules, checks and policies as one code block
+    /// Adds a code block with parameters
     #[wasm_bindgen(js_name = addCodeWithParameters)]
     pub fn add_code_with_parameters(
         &mut self,
@@ -129,11 +165,29 @@ impl Authorizer {
             .map(|(k, p)| (k, p.0))
             .collect::<HashMap<_, _>>();
 
-        self.0
-            .add_code_with_params(source, parameters, scope_parameters)
-            .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .code_with_params(source, parameters, scope_parameters)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        );
+        Ok(())
     }
 
+    #[wasm_bindgen(js_name = toString)]
+    pub fn to_string(&self) -> String {
+        self.0.as_ref().unwrap().dump_code()
+    }
+}
+
+/// The Authorizer verifies a request according to its policies and the provided token
+#[wasm_bindgen]
+//#[derive(Default)]
+pub struct Authorizer(pub(crate) biscuit::Authorizer);
+
+#[wasm_bindgen]
+impl Authorizer {
     /// Runs the authorization checks and policies
     ///
     /// Returns the index of the matching allow policy, or an error containing the matching deny
@@ -158,15 +212,15 @@ impl Authorizer {
 
     /// Executes a query over the authorizer
     #[wasm_bindgen(js_name = query)]
-    pub fn query(&mut self, rule: &Rule) -> Result<js_sys::Array, JsValue> {
+    pub fn query(&mut self, rule: &Rule) -> Result<Vec<Fact>, JsValue> {
         let v: Vec<biscuit::builder::Fact> = self
             .0
             .query(rule.0.clone())
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?;
 
-        let facts = js_sys::Array::new();
+        let mut facts = Vec::new();
         for f in v.into_iter().map(Fact) {
-            facts.push(&JsValue::from(f));
+            facts.push(f);
         }
 
         Ok(facts)
@@ -196,11 +250,5 @@ impl Authorizer {
     #[wasm_bindgen(js_name = toString)]
     pub fn to_string(&self) -> String {
         self.0.print_world()
-    }
-}
-
-impl Default for Authorizer {
-    fn default() -> Self {
-        Self::new()
     }
 }
