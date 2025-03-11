@@ -1,6 +1,6 @@
 import {
   Biscuit,
-  Authorizer,
+  AuthorizerBuilder,
   Rule,
   Fact,
   Check,
@@ -18,8 +18,19 @@ export function prepareTerm(value) {
     return { bytes: bytesToHex(value) };
   } else if (Array.isArray(value)) {
     return value.map(prepareTerm);
+  } else if (value instanceof Set) {
+    return { set: Array.from(value).map(prepareTerm) };
   } else if (typeof value.toDatalogParameter === "function") {
     return value.toDatalogParameter();
+  } else if (value instanceof Map) {
+    let map = new Map();
+    for (let [k, v] of value) {
+      map.set(prepareTerm(k), prepareTerm(v));
+    }
+
+    return {
+      map: map,
+    };
   } else {
     return value;
   }
@@ -31,13 +42,13 @@ function tagged(builder) {
     for (let i = 0; i < strings.length; i++) {
       code += strings[i];
       if (i < values.length) {
-        code += `{_param_${i}}`;
+        code += `{param_${i}}`;
       }
     }
 
     const termParameters = Object.fromEntries(
       values.map((v, i) => {
-        return [`_param_${i}`, prepareTerm(v)];
+        return [`param_${i}`, prepareTerm(v)];
       })
     );
 
@@ -53,7 +64,7 @@ function tagged(builder) {
         .map((v, i) => [i, v])
         .filter(([i, v]) => isKeyParam(v))
         .map(([i, v]) => {
-          return [`_param_${i}`, prepareTerm(v)];
+          return [`param_${i}`, prepareTerm(v)];
         })
     );
 
@@ -73,7 +84,7 @@ export function block(strings, ...values) {
 }
 
 export function authorizer(strings, ...values) {
-  const builder = new Authorizer();
+  const builder = new AuthorizerBuilder();
   return tagged(builder)(strings, ...values);
 }
 
@@ -82,13 +93,13 @@ export function fact(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
@@ -107,13 +118,13 @@ export function rule(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
@@ -137,13 +148,13 @@ export function check(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 
@@ -167,13 +178,13 @@ export function policy(strings, ...values) {
   for (let i = 0; i < strings.length; i++) {
     code += strings[i];
     if (i < values.length) {
-      code += `{_param_${i}}`;
+      code += `{param_${i}}`;
     }
   }
 
   const params = new Map(
     values.map((v, i) => {
-      return [`_param_${i}`, prepareTerm(v)];
+      return [`param_${i}`, prepareTerm(v)];
     })
   );
 

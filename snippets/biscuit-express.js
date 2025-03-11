@@ -59,12 +59,12 @@ export function middleware(options) {
         try {
           const token = tokenParser(serializedToken, publicKey);
           try {
-            let authorizer = new Authorizer();
-            applyAuthorizerBuilder(authorizer, priorityAuthorizer, req);
-            applyAuthorizerBuilder(authorizer, makeAuthorizer, req);
-            applyAuthorizerBuilder(authorizer, fallbackAuthorizer, req);
+            let authorizerBuilder = new AuthorizerBuilder();
+            applyAuthorizerBuilder(authorizerBuilder, priorityAuthorizer, req);
+            applyAuthorizerBuilder(authorizerBuilder, makeAuthorizer, req);
+            applyAuthorizerBuilder(authorizerBuilder, fallbackAuthorizer, req);
 
-            authorizer.addToken(token);
+            let authorizer = authorizerBuilder.buildAuthenticated(token);
             const result = authorizer.authorize();
             req.biscuit = {
               token,
