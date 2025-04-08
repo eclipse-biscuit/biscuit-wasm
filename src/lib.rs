@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2021 Geoffroy Couprie <contact@geoffroycouprie.com>, Clément Delafargue <clement@delafargue.name>
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 // we need an explicitly defined `to_string`, and `from_str` methods
 // so that we can expose them to JS with a proper name.
 #![allow(clippy::inherent_to_string, clippy::should_implement_trait)]
