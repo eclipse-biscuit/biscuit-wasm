@@ -27,7 +27,7 @@ export function block(
 export function authorizer(
   strings: TemplateStringsArray,
   ...values: any[]
-): Authorizer;
+): AuthorizerBuilder;
 /**
  * Tagged template generating a fact from datalog code
  *
