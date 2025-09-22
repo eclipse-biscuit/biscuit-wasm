@@ -212,6 +212,6 @@ impl From<SignatureAlgorithm> for Algorithm {
 
 pub(crate) fn make_rng() -> rand::rngs::StdRng {
     let mut data = [0u8; 8];
-    getrandom::getrandom(&mut data[..]).unwrap();
+    getrandom::fill(&mut data[..]).unwrap();
     rand::SeedableRng::seed_from_u64(u64::from_le_bytes(data))
 }
