@@ -11,14 +11,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 
-biscuit-auth = { version = "6.0.0-beta.3", features = ["wasm", "serde-error"] }
+biscuit-auth = { version = "6.0.0", features = ["wasm", "serde-error"] }
 console_error_panic_hook = "0.1.7"
 hex = "0.4.3"
-rand = "0.8"
+rand = "0.9"
 wasm-bindgen = {version = "0.2.100", features = ["serde-serialize"] }
 wasm-logger = "0.2.0"
 wee_alloc = "0.4.5"
-getrandom = { version = "0.2.8", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 serde-wasm-bindgen = "0.6.5"
 serde = { version = "1.0.218", features = ["derive"]}
 js-sys = "0.3.60"
@@ -27,3 +27,6 @@ time = "0.3.37"
 # context: https://github.com/webpack/webpack/issues/15566#issuecomment-2421927813
 [profile.release]
 strip = true
+
+[patch.crates-io]
+biscuit-auth = { git = "https://github.com/baloo/biscuit-rust.git", branch = "baloo/bump-rustcrypto-pre-releases" }
