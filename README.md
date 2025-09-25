@@ -1,6 +1,8 @@
 # Biscuit-wasm
 
-This library wraps the [Rust implementation](https://github.com/biscuit-auth) of [Biscuit tokens](https://www.biscuitsec.org) in WebAssembly, for usage in NodeJS and browsers.
+This repo is part of the [eclipse biscuit](https://github.com/biscuit-auth/biscuit) project.
+
+This library wraps the [Rust implementation](https://github.com/biscuit-auth) of [Eclipse Biscuit tokens](https://www.biscuitsec.org) in WebAssembly, for usage in NodeJS and browsers.
 
 It provides both EcmaScript and CommonJS modules, along with TypeScript type definitions.
 
