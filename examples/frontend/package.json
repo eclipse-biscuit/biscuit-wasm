@@ -12,7 +12,7 @@
     "@biscuit-auth/biscuit-wasm": "file:../.."
   },
   "devDependencies": {
-    "webpack": "^5.4.0",
+    "webpack": "^5.101.0",
     "webpack-cli": "^4.2.0",
     "@web/dev-server": "^0.1.28"
   },
