@@ -1,11 +1,11 @@
 {
   "name": "@biscuit-auth/biscuit-wasm",
   "description": "WebAssembly wrapper for Biscuit authorization tokens",
-  "version": "0.6.0-beta.1",
+  "version": "0.6.0-beta.2",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/biscuit-auth/biscuit-wasm"
+    "url": "git+https://github.com/eclipse-biscuit/biscuit-wasm.git"
   },
   "scripts": {
     "build": "wasm-pack build --target bundler --out-dir module --out-name biscuit --scope biscuit-auth && npm run append-snippets",
