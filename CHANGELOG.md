@@ -1,3 +1,7 @@
+# `0.6.0-beta1`
+
+- Bump biscuit-auth to `6.0.0` (#51, #54) (Geoffroy Couprie, Tomáš Čarnecký)
+
 # `0.5.0`
 
 - Bump biscuit-auth to `5.0.0` (Clément Delafargue)
