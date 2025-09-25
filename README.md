@@ -24,17 +24,6 @@ _see the example code in examples/node_
 
 The `node` executable must be started with the [`--experimental-wasm-modules` flag](https://nodejs.org/api/esm.html#wasm-modules).
 
-#### Node 18
-
-Due to some wasm-side dependencies, to work in Node, biscuit-wasm requires that this be added to the application:
-
-```javascript
-import { webcrypto } from "node:crypto";
-globalThis.crypto = webcrypto;
-```
-
-This is no longer necessary starting with node 19.
-
 ### In browser
 
 _see the example code in examples/frontend_
