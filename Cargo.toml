@@ -1,6 +1,6 @@
 [package]
 name = "biscuit-wasm"
-version = "0.6.0-beta1"
+version = "0.6.0"
 edition = "2021"
 repository = "https://github.com/biscuit-auth/biscuit-wasm"
 description = "WebAssembly wrapper for Biscuit authorization tokens"
