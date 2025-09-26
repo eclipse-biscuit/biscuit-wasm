@@ -1,4 +1,4 @@
-# `0.6.0-beta.2`
+# `0.6.0`
 
 - Bump biscuit-auth to `6.0.0` (#51, #54) (Geoffroy Couprie, Tomáš Čarnecký)
 
