@@ -17,6 +17,7 @@ pub struct RunLimits {
     pub max_facts: Option<u64>,
     pub max_iterations: Option<u64>,
     pub max_time_micro: Option<u64>,
+    pub max_steps: Option<u64>,
 }
 
 const DEFAULT_TIMEOUT: Duration = Duration::from_millis(20);
@@ -31,6 +32,7 @@ impl RunLimits {
                 .max_time_micro
                 .map(Duration::from_micros)
                 .unwrap_or(DEFAULT_TIMEOUT),
+            max_steps: self.max_steps.unwrap_or(defaults.max_steps),
         }
     }
 }
@@ -167,7 +169,7 @@ impl AuthorizerBuilder {
             serde_wasm_bindgen::from_value(scope_parameters).unwrap();
         let scope_parameters = scope_parameters
             .into_iter()
-            .map(|(k, p)| (k, p.0))
+            .map(|(k, p)| (k, p.0.into()))
             .collect::<HashMap<_, _>>();
 
         self.0 = Some(

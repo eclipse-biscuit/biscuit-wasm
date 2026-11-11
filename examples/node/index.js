@@ -1,7 +1,6 @@
 import {
   Biscuit,
   PrivateKey,
-  KeyPair,
   authorizer,
   biscuit,
   block,
@@ -17,10 +16,9 @@ if (parseInt(process.version.match(/v(\d+)\.(\d+)\.(\d+)/)[1], 10) <= 18) {
   globalThis.crypto = webcrypto;
 }
 
-let pk = PrivateKey.fromString(
+let root = PrivateKey.fromString(
   "ed25519-private/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
 );
-let root = KeyPair.fromPrivateKey(pk);
 
 console.log("created the root key");
 
@@ -34,13 +32,12 @@ for (let right of ["read", "write"]) {
 let thirdPartyPk = PrivateKey.fromString(
   "ed25519-private/39c657dbd3f68b09bc8e5fd9887c7cb47a91d1d3883ffbc495ca790552398a92"
 );
-let thirdPartyRoot = KeyPair.fromPrivateKey(thirdPartyPk);
 biscuitBuilder.addCheck(
-  check`check if group("admin") trusting ${thirdPartyRoot.getPublicKey()}`
+  check`check if group("admin") trusting ${thirdPartyPk.getPublicKey()}`
 );
 
 let token = biscuitBuilder
-  .build(root.getPrivateKey()) // biscuit token
+  .build(root) // biscuit token
   .appendBlock(block`check if user($u)`); // attenuated biscuit token
 
 let thirdPartyRequest = token.getThirdPartyRequest();
@@ -50,7 +47,7 @@ let thirdPartyBlock = thirdPartyRequest.createBlock(
 );
 
 token = token.appendThirdPartyBlock(
-  thirdPartyRoot.getPublicKey(),
+  thirdPartyPk.getPublicKey(),
   thirdPartyBlock
 );
 
@@ -96,7 +93,7 @@ let facts2 = auth.queryWithLimits(r2, {
 });
 console.log(facts2.map((f) => f.toString()));
 
-let r3 = rule`g($id) <- group($id) trusting ${thirdPartyRoot.getPublicKey()}`;
+let r3 = rule`g($id) <- group($id) trusting ${thirdPartyPk.getPublicKey()}`;
 console.log("Third-party blocks can be queried by providing their public key");
 console.log(r3.toString());
 let facts3 = auth.queryWithLimits(r3, {

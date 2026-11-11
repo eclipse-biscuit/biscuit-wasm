@@ -2,7 +2,6 @@ import express from "express";
 import {
   biscuit,
   authorizer,
-  KeyPair,
   middleware,
   PrivateKey,
 } from "@biscuit-auth/biscuit-wasm";
@@ -13,9 +12,9 @@ const app = express();
 const port = 3000;
 
 const pk = "510fa4152b316a29c16e9459553e34abe891f006175bd61b7daca8b19f14ab90";
-const keypair = KeyPair.fromPrivateKey(PrivateKey.fromString(pk));
+const privateKey = PrivateKey.fromString(pk);
 const p = middleware({
-  publicKey: keypair.getPublicKey(),
+  publicKey: privateKey.getPublicKey(),
   priorityAuthorizer: (req) =>
     authorizer`allow if ${req.headers.prio ?? ""} == "true";`,
   fallbackAuthorizer: (req) =>
@@ -47,7 +46,7 @@ app.get(
 app.listen(port, () => {
   const b = biscuit`
     scope("puna", "read");
-  `.build(keypair.getPrivateKey());
+  `.build(privateKey);
   console.log("This token will grant you read access to /protected/puna");
   console.log(b.toBase64());
 });
