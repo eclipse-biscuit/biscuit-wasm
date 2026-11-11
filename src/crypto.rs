@@ -10,41 +10,6 @@ use biscuit_auth::Algorithm;
 use serde::{de::Visitor, Deserialize};
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
-/// A pair of public and private key
-#[wasm_bindgen]
-pub struct KeyPair(pub(crate) biscuit::KeyPair);
-
-#[wasm_bindgen]
-impl KeyPair {
-    #[wasm_bindgen(constructor)]
-    pub fn new(algorithm: SignatureAlgorithm) -> KeyPair {
-        let mut rng = make_rng();
-
-        KeyPair(biscuit::KeyPair::new_with_rng(algorithm.into(), &mut rng))
-    }
-
-    #[wasm_bindgen(js_name = fromPrivateKey)]
-    pub fn from(key: &PrivateKey) -> Self {
-        KeyPair(biscuit::KeyPair::from(&key.0))
-    }
-
-    #[wasm_bindgen(js_name = getPublicKey)]
-    pub fn public(&self) -> PublicKey {
-        PublicKey(self.0.public())
-    }
-
-    #[wasm_bindgen(js_name = getPrivateKey)]
-    pub fn private(&self) -> PrivateKey {
-        PrivateKey(self.0.private())
-    }
-}
-
-impl Default for KeyPair {
-    fn default() -> Self {
-        Self::new(SignatureAlgorithm::Ed25519)
-    }
-}
-
 /// Public key
 #[wasm_bindgen]
 pub struct PublicKey(pub(crate) biscuit::PublicKey);
@@ -151,11 +116,29 @@ impl Visitor<'_> for PublicKeyVisitor {
     }
 }
 
+/// Private key
 #[wasm_bindgen]
 pub struct PrivateKey(pub(crate) biscuit::PrivateKey);
 
 #[wasm_bindgen]
 impl PrivateKey {
+    /// Generates a new random private key
+    #[wasm_bindgen(constructor)]
+    pub fn new(algorithm: SignatureAlgorithm) -> PrivateKey {
+        let mut rng = make_rng();
+
+        PrivateKey(biscuit::PrivateKey::new_with_rng(
+            algorithm.into(),
+            &mut rng,
+        ))
+    }
+
+    /// Returns the public key corresponding to this private key
+    #[wasm_bindgen(js_name = getPublicKey)]
+    pub fn public(&self) -> PublicKey {
+        PublicKey(self.0.public())
+    }
+
     /// Serializes a private key to raw bytes
     #[wasm_bindgen(js_name = toBytes)]
     pub fn to_bytes(&self, out: &mut [u8]) -> Result<(), JsValue> {
@@ -193,6 +176,12 @@ impl PrivateKey {
     }
 }
 
+impl Default for PrivateKey {
+    fn default() -> Self {
+        Self::new(SignatureAlgorithm::Ed25519)
+    }
+}
+
 #[wasm_bindgen]
 #[derive(Default)]
 pub enum SignatureAlgorithm {
@@ -211,7 +200,7 @@ impl From<SignatureAlgorithm> for Algorithm {
 }
 
 pub(crate) fn make_rng() -> rand::rngs::StdRng {
-    let mut data = [0u8; 8];
-    getrandom::getrandom(&mut data[..]).unwrap();
-    rand::SeedableRng::seed_from_u64(u64::from_le_bytes(data))
+    let mut seed = [0u8; 32];
+    getrandom::fill(&mut seed[..]).unwrap();
+    rand::SeedableRng::from_seed(seed)
 }

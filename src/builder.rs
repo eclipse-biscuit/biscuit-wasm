@@ -26,14 +26,12 @@ impl BiscuitBuilder {
 
     #[wasm_bindgen(js_name = build)]
     pub fn build(mut self, root: &PrivateKey) -> Result<Biscuit, JsValue> {
-        let keypair = biscuit_auth::KeyPair::from(&root.0);
-
         let mut rng = make_rng();
         Ok(Biscuit(
             self.0
                 .take()
                 .expect("empty BiscuitBuilder")
-                .build_with_rng(&keypair, biscuit::datalog::SymbolTable::default(), &mut rng)
+                .build_with_rng(&root.0, biscuit::datalog::SymbolTable::default(), &mut rng)
                 .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
         ))
     }
@@ -132,7 +130,7 @@ impl BiscuitBuilder {
             serde_wasm_bindgen::from_value(scope_parameters).unwrap();
         let scope_parameters = scope_parameters
             .into_iter()
-            .map(|(k, p)| (k, p.0))
+            .map(|(k, p)| (k, p.0.into()))
             .collect::<HashMap<_, _>>();
 
         self.0 = Some(
@@ -245,7 +243,7 @@ impl BlockBuilder {
             serde_wasm_bindgen::from_value(scope_parameters).unwrap();
         let scope_parameters = scope_parameters
             .into_iter()
-            .map(|(k, p)| (k, p.0))
+            .map(|(k, p)| (k, p.0.into()))
             .collect::<HashMap<_, _>>();
 
         self.0 = Some(
@@ -668,7 +666,7 @@ impl<'de> Visitor<'de> for TermVisitor {
 
             _ => Err(Error::custom(format!(
                 "unexpected key: {}, expecting date, bytes, set or map",
-                &k
+                k
             ))),
         }
     }

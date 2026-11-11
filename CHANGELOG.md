@@ -1,3 +1,9 @@
+# `0.7.0`
+
+- Bump biscuit-auth to `7.0.0`
+- Add support for `max_steps` runtime limitation
+- BREAKING remove `KeyPair` and use `PrivateKey` directly instead
+
 # `0.6.0`
 
 - Bump biscuit-auth to `6.0.0` (#51, #54) (Geoffroy Couprie, Tomáš Čarnecký)

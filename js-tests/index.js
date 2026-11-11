@@ -7,7 +7,6 @@ import {
   rule,
   policy,
   Biscuit,
-  KeyPair,
   PrivateKey,
   PublicKey,
   SignatureAlgorithm,
@@ -27,53 +26,41 @@ test("keypair generation", function (t) {
   let pubStr =
     "ed25519/9d0b36243c1dd2ceec188b81e798c6a7f2954fc02bd4c3913eb1885a2999278b";
   let pk = PrivateKey.fromString(pkStr);
-  let root = KeyPair.fromPrivateKey(pk);
-  t.equal(root.getPrivateKey().toString(), pkStr, "private key roundtrip");
-  t.equal(root.getPublicKey().toString(), pubStr, "public key generation");
+  t.equal(pk.toString(), pkStr, "private key roundtrip");
+  t.equal(pk.getPublicKey().toString(), pubStr, "public key generation");
   t.end();
 });
 
 test("ECDSA keypair generation", function (t) {
-  let kp = new KeyPair(SignatureAlgorithm.Secp256r1);
+  let kp = new PrivateKey(SignatureAlgorithm.Secp256r1);
   console.log(kp.getPublicKey().toString());
   t.ok(
     kp.getPublicKey().toString().startsWith("secp256r1/"),
     "public key prefix"
   );
-  t.ok(
-    kp.getPrivateKey().toString().startsWith("secp256r1-private/"),
-    "private key prefix"
-  );
+  t.ok(kp.toString().startsWith("secp256r1-private/"), "private key prefix");
 
-  let kp2 = new KeyPair(SignatureAlgorithm.Ed25519);
+  let kp2 = new PrivateKey(SignatureAlgorithm.Ed25519);
   console.log(kp2.getPublicKey().toString());
   t.ok(
     kp2.getPublicKey().toString().startsWith("ed25519/"),
     "public key prefix"
   );
-  t.ok(
-    kp2.getPrivateKey().toString().startsWith("ed25519-private/"),
-    "private key prefix"
-  );
+  t.ok(kp2.toString().startsWith("ed25519-private/"), "private key prefix");
 
-  let kp3 = new KeyPair();
+  let kp3 = new PrivateKey();
   console.log(kp3.getPublicKey().toString());
   t.ok(
     kp3.getPublicKey().toString().startsWith("ed25519/"),
     "public key prefix"
   );
-  t.ok(
-    kp3.getPrivateKey().toString().startsWith("ed25519-private/"),
-    "private key prefix"
-  );
+  t.ok(kp3.toString().startsWith("ed25519-private/"), "private key prefix");
 
   let id = "1234";
   let biscuitBuilder = biscuit`user(${id});`;
 
   biscuitBuilder.setRootKeyId(1234);
-  let token = biscuitBuilder
-    .build(kp.getPrivateKey())
-    .appendBlock(block`check if user($u)`);
+  let token = biscuitBuilder.build(kp).appendBlock(block`check if user($u)`);
   let serializedToken = token.toBase64();
 
   let parsedToken = Biscuit.fromBase64(serializedToken, kp.getPublicKey());
@@ -160,10 +147,9 @@ deny if true;
 });
 
 test("complete lifecycle", function (t) {
-  let pk = PrivateKey.fromString(
+  let root = PrivateKey.fromString(
     "ed25519-private/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
   );
-  let root = KeyPair.fromPrivateKey(pk);
 
   let id = "1234";
   let biscuitBuilder = biscuit`user(${id});`;
@@ -174,7 +160,7 @@ test("complete lifecycle", function (t) {
 
   biscuitBuilder.setRootKeyId(1234);
   let token = biscuitBuilder
-    .build(root.getPrivateKey()) // biscuit token
+    .build(root) // biscuit token
     .appendBlock(block`check if user($u)`); // attenuated biscuit token
   let serializedToken = token.toBase64();
 
@@ -193,15 +179,15 @@ test("complete lifecycle", function (t) {
   let policy = auth.authorize();
   t.equal(policy, 0, "authorization suceeded");
 
-  let otherKeyPair = new KeyPair();
-  let r = rule`u($id) <- user($id), $id == ${id} trusting authority, ${otherKeyPair.getPublicKey()}`;
+  let otherKey = new PrivateKey();
+  let r = rule`u($id) <- user($id), $id == ${id} trusting authority, ${otherKey.getPublicKey()}`;
   let facts = auth.queryWithLimits(r, {
     max_time_micro: 100000,
   });
   t.equal(facts.length, 1, "correct number of query results");
   t.equal(facts[0].toString(), `u("1234")`, "correct query result");
 
-  let r2 = rule`test(1, "a", 2024-04-28T16:31:06Z, hex:00aabb, true, null, [2, 3, 4], { 1, 2, 1, 4}, {"a": "abc", "b": { "x": 12}}) <- true trusting authority, ${otherKeyPair.getPublicKey()}`;
+  let r2 = rule`test(1, "a", 2024-04-28T16:31:06Z, hex:00aabb, true, null, [2, 3, 4], { 1, 2, 1, 4}, {"a": "abc", "b": { "x": 12}}) <- true trusting authority, ${otherKey.getPublicKey()}`;
   let facts2 = auth.queryWithLimits(r2, {
     max_time_micro: 100000,
   });
@@ -311,15 +297,13 @@ check if true trusting authority, ed25519/41e77e842e5c952a29233992dc8ebbedd2d832
 });
 
 test("third-party blocks", function (t) {
-  let pk = PrivateKey.fromString(
+  let root = PrivateKey.fromString(
     "ed25519-private/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
   );
-  let root = KeyPair.fromPrivateKey(pk);
 
   let thirdPartyPk = PrivateKey.fromString(
     "ed25519-private/39c657dbd3f68b09bc8e5fd9887c7cb47a91d1d3883ffbc495ca790552398a92"
   );
-  let thirdPartyRoot = KeyPair.fromPrivateKey(thirdPartyPk);
 
   let id = "1234";
   let biscuitBuilder = biscuit`user(${id});`;
@@ -329,11 +313,11 @@ test("third-party blocks", function (t) {
   }
 
   biscuitBuilder.addCheck(
-    check`check if group("admin") trusting ${thirdPartyRoot.getPublicKey()}`
+    check`check if group("admin") trusting ${thirdPartyPk.getPublicKey()}`
   );
 
   let token = biscuitBuilder
-    .build(root.getPrivateKey()) // biscuit token
+    .build(root) // biscuit token
     .appendBlock(block`check if user($u)`); // attenuated biscuit token
 
   let thirdPartyRequest = token.getThirdPartyRequest();
@@ -343,7 +327,7 @@ test("third-party blocks", function (t) {
   );
 
   token = token.appendThirdPartyBlock(
-    thirdPartyRoot.getPublicKey(),
+    thirdPartyPk.getPublicKey(),
     thirdPartyBlock
   );
   let serializedToken = token.toBase64();
@@ -355,7 +339,7 @@ test("third-party blocks", function (t) {
   let policy = auth.authorize();
   t.equal(policy, 0, "authorization suceeded");
 
-  let r1 = rule`g($group) <- group($group) trusting ${thirdPartyRoot.getPublicKey()}`;
+  let r1 = rule`g($group) <- group($group) trusting ${thirdPartyPk.getPublicKey()}`;
   let facts = auth.queryWithLimits(r1, {
     max_time_micro: 100000,
   });

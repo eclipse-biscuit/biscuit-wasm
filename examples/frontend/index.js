@@ -1,7 +1,6 @@
 import {
   Biscuit,
   PrivateKey,
-  KeyPair,
   Fact,
   Rule,
   biscuit,
@@ -9,12 +8,9 @@ import {
   block,
 } from "@biscuit-auth/biscuit-wasm";
 
-let keypair = new KeyPair();
-
-let pk = PrivateKey.fromString(
+let root = PrivateKey.fromString(
   "ed25519-private/473b5189232f3f597b5c2f3f9b0d5e28b1ee4e7cce67ec6b7fbf5984157a6b97"
 );
-let root = KeyPair.fromPrivateKey(pk);
 
 console.log("created the root key");
 
@@ -26,7 +22,7 @@ for (let right of ["read", "write"]) {
 }
 
 let token = biscuitBuilder
-  .build(root.getPrivateKey()) // biscuit token
+  .build(root) // biscuit token
   .appendBlock(block`check if user($u)`); // attenuated biscuit token
 console.log(token);
 let serializedToken = token.toBase64();

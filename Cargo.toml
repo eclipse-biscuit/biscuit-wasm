@@ -11,14 +11,14 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 
-biscuit-auth = { version = "6.0.0", features = ["wasm", "serde-error"] }
+biscuit-auth = { version = "7.0.0-alpha.1", features = ["wasm", "serde-error"] }
 console_error_panic_hook = "0.1.7"
 hex = "0.4.3"
-rand = "0.8"
+rand = "0.10"
 wasm-bindgen = {version = "0.2.104", features = ["serde-serialize"] }
 wasm-logger = "0.2.0"
 wee_alloc = "0.4.5"
-getrandom = { version = "0.2.8", features = ["js"] }
+getrandom = { version = "0.4", features = ["wasm_js"] }
 serde-wasm-bindgen = "0.6.5"
 serde = { version = "1.0.218", features = ["derive"]}
 js-sys = "0.3.60"
