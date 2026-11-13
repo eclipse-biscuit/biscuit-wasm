@@ -122,6 +122,65 @@ impl Biscuit {
         ))
     }
 
+    /// Deserializes a token from raw data, rejecting it if it does not respect the limits
+    ///
+    /// This will check the signature using the root key
+    #[wasm_bindgen(js_name = fromBytesWithLimits)]
+    pub fn from_bytes_with_limits(
+        data: &[u8],
+        root: &PublicKey,
+        limits: JsValue,
+    ) -> Result<Biscuit, JsValue> {
+        let limits = deserialization_limits(limits)?;
+        Ok(Biscuit(
+            biscuit::Biscuit::from_with_limits(data, root.0, &limits)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
+    #[wasm_bindgen(js_name = fromBytesWithProviderAndLimits)]
+    pub fn from_bytes_with_provider_and_limits(
+        data: &[u8],
+        provider: &js_sys::Function,
+        limits: JsValue,
+    ) -> Result<Biscuit, JsValue> {
+        let limits = deserialization_limits(limits)?;
+        Ok(Biscuit(
+            biscuit::Biscuit::from_with_limits(data, KeyProvider::new(provider), &limits)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
+    /// Deserializes a token from URL safe base 64 data, rejecting it if it does not respect the
+    /// limits
+    ///
+    /// This will check the signature using the root key
+    #[wasm_bindgen(js_name = fromBase64WithLimits)]
+    pub fn from_base64_with_limits(
+        data: &str,
+        root: &PublicKey,
+        limits: JsValue,
+    ) -> Result<Biscuit, JsValue> {
+        let limits = deserialization_limits(limits)?;
+        Ok(Biscuit(
+            biscuit::Biscuit::from_base64_with_limits(data, root.0, &limits)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
+    #[wasm_bindgen(js_name = fromBase64WithProviderAndLimits)]
+    pub fn from_base64_with_provider_and_limits(
+        data: &str,
+        provider: &js_sys::Function,
+        limits: JsValue,
+    ) -> Result<Biscuit, JsValue> {
+        let limits = deserialization_limits(limits)?;
+        Ok(Biscuit(
+            biscuit::Biscuit::from_base64_with_limits(data, KeyProvider::new(provider), &limits)
+                .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())?,
+        ))
+    }
+
     /// Serializes to raw data
     #[wasm_bindgen(js_name = toBytes)]
     pub fn to_bytes(&self) -> Result<Box<[u8]>, JsValue> {
@@ -302,6 +361,11 @@ impl ThirdPartyBlock {
             .serialize_base64()
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
     }
+}
+
+fn deserialization_limits(limits: JsValue) -> Result<biscuit::DeserializationLimits, JsValue> {
+    let limits: serde_json::Value = serde_wasm_bindgen::from_value(limits)?;
+    serde_json::from_value(limits).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 struct KeyProvider<'a> {
