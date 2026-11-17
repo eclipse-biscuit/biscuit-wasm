@@ -43,9 +43,9 @@ checksum = "8c3c1a368f70d6cf7302d78f8f7093da241fb8e8807c05cc9e51a125895a6d5b"
 
 [[package]]
 name = "biscuit-auth"
-version = "7.0.0-alpha.1"
+version = "7.0.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0596a4c8b69a9538b8b1d160b9f94df2d970f4c0fb2657cb2fdf20239ac7eac7"
+checksum = "2c3bf746be6281ff67063f156d431e4e4285e997f1c482adc06ee48dbba66ad1"
 dependencies = [
  "base64",
  "biscuit-parser",
@@ -55,7 +55,6 @@ dependencies = [
  "nom",
  "p256",
  "prost",
- "prost-types",
  "rand",
  "rand_core",
  "regex",
@@ -69,9 +68,9 @@ dependencies = [
 
 [[package]]
 name = "biscuit-parser"
-version = "0.3.0-alpha.1"
+version = "0.3.0-alpha.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9614806ae155af29e36a5f8b4aa424906b1bb038af9f940fb89c7bfc453112e5"
+checksum = "6a3a395c50704b7f147bfdc3f10e44c3a38c9267eaee704d68c6d209c2a80c4c"
 dependencies = [
  "hex",
  "nom",
@@ -84,15 +83,15 @@ dependencies = [
 
 [[package]]
 name = "biscuit-quote"
-version = "0.4.0-alpha.1"
+version = "0.4.0-alpha.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3182989e95b57de8d4cbbb84fbf9448b9b112c4cde95f439163ddd284a766a1e"
+checksum = "306287f96a32d02842a544b220e43253083e7d7fdc9ed82a71466f5ffdb890ac"
 dependencies = [
  "biscuit-parser",
  "manyhow",
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.10",
 ]
 
 [[package]]
@@ -107,6 +106,7 @@ dependencies = [
  "rand",
  "serde",
  "serde-wasm-bindgen",
+ "serde_json",
  "time",
  "wasm-bindgen",
  "wasm-logger",
@@ -467,21 +467,21 @@ checksum = "30bde2b3dc3671ae49d8e2e9f044c7c005836e7a023ee57cffa25ab82764bb9e"
 
 [[package]]
 name = "manyhow"
-version = "0.11.4"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b33efb3ca6d3b07393750d4030418d594ab1139cee518f0dc88db70fec873587"
+checksum = "f1704b073316272a6785b70599f91f73b49022c2e290b065591ee6b9109ed8c7"
 dependencies = [
  "manyhow-macros",
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.10",
 ]
 
 [[package]]
 name = "manyhow-macros"
-version = "0.11.4"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46fce34d199b78b6e6073abf984c9cf5fd3e9330145a93ee0738a7443e371495"
+checksum = "31601db71f1f5fb6f831a18aa3052d13a62528ee4f2cba7e8c9a5e258d953725"
 dependencies = [
  "proc-macro-utils",
  "proc-macro2",
@@ -637,15 +637,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
-]
-
-[[package]]
-name = "prost-types"
-version = "0.14.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96e89651c132da91958fd6092a2f7262c2c36c08df4f68af0bb3591caacbbb45"
-dependencies = [
- "prost",
 ]
 
 [[package]]

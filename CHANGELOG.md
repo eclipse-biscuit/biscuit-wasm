@@ -3,6 +3,9 @@
 - Bump biscuit-auth to `7.0.0`
 - Add support for `max_steps` runtime limitation
 - BREAKING remove `KeyPair` and use `PrivateKey` directly instead
+- BREAKING errors thrown from JS use the new biscuit-auth JSON encoding: variant names are
+  `snake_case`, enums with data are adjacently tagged (`{ type: "failed_logic", value: { ... } }`)
+  and enums without data are plain strings (`{ type: "format", value: { type: "token_limit", value: "too_many_blocks" } }`)
 
 # `0.6.0`
 

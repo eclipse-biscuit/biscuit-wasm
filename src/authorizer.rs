@@ -46,7 +46,25 @@ pub struct AuthorizerBuilder(pub(crate) Option<biscuit::builder::AuthorizerBuild
 impl AuthorizerBuilder {
     #[wasm_bindgen(constructor)]
     pub fn new() -> AuthorizerBuilder {
-        AuthorizerBuilder(Some(biscuit::builder::AuthorizerBuilder::new()))
+        AuthorizerBuilder(Some(biscuit::builder::AuthorizerBuilder::new().set_limits(
+            biscuit::AuthorizerLimits {
+                max_time: DEFAULT_TIMEOUT,
+                ..Default::default()
+            },
+        )))
+    }
+
+    /// Sets the limits used by `authorize` and `query` on the authorizer
+    #[wasm_bindgen(js_name = setLimits)]
+    pub fn set_limits(&mut self, limits: JsValue) -> Result<(), JsValue> {
+        let limits: RunLimits = serde_wasm_bindgen::from_value(limits)?;
+        self.0 = Some(
+            self.0
+                .take()
+                .expect("empty AuthorizerBuilder")
+                .set_limits(limits.to_rust_limits()),
+        );
+        Ok(())
     }
 
     #[wasm_bindgen(js_name = buildAuthenticated)]
@@ -202,10 +220,7 @@ impl Authorizer {
     #[wasm_bindgen(js_name = authorize)]
     pub fn authorize(&mut self) -> Result<usize, JsValue> {
         self.0
-            .authorize_with_limits(biscuit::datalog::RunLimits {
-                max_time: DEFAULT_TIMEOUT,
-                ..Default::default()
-            })
+            .authorize()
             .map_err(|e| serde_wasm_bindgen::to_value(&e).unwrap())
     }
 

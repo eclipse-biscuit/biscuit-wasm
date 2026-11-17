@@ -350,3 +350,187 @@ test("third-party blocks", function (t) {
   t.equal(auth.query(r2).length, 0, "correct number of query results");
   t.end();
 });
+
+test("deserialization limits", function (t) {
+  let root = new PrivateKey();
+  let token = biscuit`user("1234"); right("read"); right("write");`
+    .build(root)
+    .appendBlock(block`check if user($u)`);
+  let serializedToken = token.toBase64();
+  let tokenBytes = token.toBytes();
+  let provider = () => root.getPublicKey();
+
+  let parsed = Biscuit.fromBase64WithLimits(
+    serializedToken,
+    root.getPublicKey(),
+    {}
+  );
+  t.equal(parsed.countBlocks(), 2, "empty limits allow everything");
+
+  let blockLimits = { max_blocks: 1 };
+  let tooManyBlocks = {
+    type: "format",
+    value: { type: "token_limit", value: "too_many_blocks" },
+  };
+  t.throws(
+    () =>
+      Biscuit.fromBase64WithLimits(
+        serializedToken,
+        root.getPublicKey(),
+        blockLimits
+      ),
+    (e) => t.deepEqual(e, tooManyBlocks) || true,
+    "base64 token with too many blocks"
+  );
+  t.throws(
+    () =>
+      Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), blockLimits),
+    (e) => t.deepEqual(e, tooManyBlocks) || true,
+    "token with too many blocks"
+  );
+  t.throws(
+    () =>
+      Biscuit.fromBase64WithProviderAndLimits(
+        serializedToken,
+        provider,
+        blockLimits
+      ),
+    (e) => t.deepEqual(e, tooManyBlocks) || true,
+    "base64 token with too many blocks, with provider"
+  );
+  t.throws(
+    () =>
+      Biscuit.fromBytesWithProviderAndLimits(tokenBytes, provider, blockLimits),
+    (e) => t.deepEqual(e, tooManyBlocks) || true,
+    "token with too many blocks, with provider"
+  );
+
+  t.throws(
+    () =>
+      Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), {
+        authority: { max_facts: 2 },
+      }),
+    (e) =>
+      t.deepEqual(e, {
+        type: "format",
+        value: {
+          type: "block_limit",
+          value: { block_id: 0, limit: "too_many_facts" },
+        },
+      }) || true,
+    "authority block with too many facts"
+  );
+
+  t.throws(
+    () =>
+      Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), {
+        attenuations: { allowed_check_kinds: ["all"] },
+      }),
+    (e) =>
+      t.deepEqual(e, {
+        type: "format",
+        value: {
+          type: "block_limit",
+          value: { block_id: 1, limit: "check_kind_not_allowed" },
+        },
+      }) || true,
+    "attenuation block with a disallowed check kind"
+  );
+
+  t.throws(
+    () =>
+      Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), {
+        allowed_internal_signing_algorithms: ["secp256r1"],
+      }),
+    "token signed with a disallowed algorithm"
+  );
+
+  t.throws(
+    () =>
+      Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), {
+        max_block: 1,
+      }),
+    "unknown limit field"
+  );
+  t.end();
+});
+
+test("authorizer run limits", function (t) {
+  let root = new PrivateKey();
+  let token = biscuit`user("1234");`.build(root);
+
+  let builder = authorizer`
+    data(1); data(2); data(3);
+    other($x) <- data($x);
+    allow if user($u);
+  `;
+  t.equal(
+    builder.buildAuthenticated(token).authorize(),
+    0,
+    "default limits allow authorization"
+  );
+
+  builder = authorizer`
+    data(1); data(2); data(3);
+    other($x) <- data($x);
+    allow if user($u);
+  `;
+  builder.setLimits({ max_facts: 5 });
+  let auth = builder.buildAuthenticated(token);
+  t.throws(
+    () => auth.authorize(),
+    (e) =>
+      t.deepEqual(e, {
+        type: "run_limit",
+        value: { type: "too_many_facts" },
+      }) || true,
+    "authorize uses the builder limits"
+  );
+  t.end();
+});
+
+test("deserialization limits on block contents", function (t) {
+  let root = new PrivateKey();
+  let external = new PrivateKey();
+  let token = biscuit`
+    data({1, 2});
+    map({"a": 1});
+    check if data($d), $d.length() > 1;
+    check if group("admin") trusting ${external.getPublicKey()};
+  `.build(root);
+  let tokenBytes = token.toBytes();
+
+  let cases = [
+    [{ allowed_term_types: ["integer", "string", "map"] }, "term_type_not_allowed"],
+    [{ allowed_map_key_types: ["integer"] }, "map_key_type_not_allowed"],
+    [{ allowed_unary_ops: ["negate"] }, "unary_operation_not_allowed"],
+    [{ allowed_binary_ops: ["less_than"] }, "binary_operation_not_allowed"],
+    [{ allowed_trusting_scopes: ["authority"] }, "trusted_scope_not_allowed"],
+  ];
+  for (let [authority, limit] of cases) {
+    t.throws(
+      () =>
+        Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), {
+          authority,
+        }),
+      (e) =>
+        t.deepEqual(e, {
+          type: "format",
+          value: { type: "block_limit", value: { block_id: 0, limit } },
+        }) || true,
+      limit
+    );
+  }
+
+  let parsed = Biscuit.fromBytesWithLimits(tokenBytes, root.getPublicKey(), {
+    authority: {
+      allowed_term_types: ["integer", "string", "set", "map"],
+      allowed_map_key_types: ["string"],
+      allowed_unary_ops: ["length"],
+      allowed_binary_ops: ["greater_than"],
+      allowed_trusting_scopes: [{ public_key: "ed25519" }],
+    },
+  });
+  t.equal(parsed.countBlocks(), 1, "token respecting the limits");
+  t.end();
+});
