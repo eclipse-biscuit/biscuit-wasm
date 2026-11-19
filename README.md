@@ -48,6 +48,48 @@ module.exports = {
 };
 ```
 
+### Cloudflare Workers / workerd
+
+Cloudflare Workers and other `workerd`-style runtimes import `.wasm` assets as
+precompiled `WebAssembly.Module` objects instead of relying on bundler-managed
+WASM module imports. The default package entry remains the `wasm-pack --target bundler`
+output for browser and Node bundler use cases, but the package now also exposes
+runtime-specific entrypoints for manual initialization:
+
+```javascript
+import {
+  Biscuit,
+  KeyPair,
+  PrivateKey,
+  authorizer,
+  biscuit,
+  block,
+} from "@biscuit-auth/biscuit-wasm/workerd";
+```
+
+If your tooling does not honor the `workerd` export condition automatically, you
+can import the explicit `@biscuit-auth/biscuit-wasm/workerd` subpath.
+
+For runtimes that can provide a `WebAssembly.Module` directly, use the `sync`
+entrypoint and initialize the package yourself:
+
+```javascript
+import { readFileSync } from "node:fs";
+import {
+  Biscuit,
+  PrivateKey,
+  authorizer,
+  biscuit,
+  block,
+  initSync,
+} from "@biscuit-auth/biscuit-wasm/sync";
+
+const wasmBytes = readFileSync(
+  new URL("./node_modules/@biscuit-auth/biscuit-wasm/module/biscuit_bg.wasm", import.meta.url)
+);
+initSync(new WebAssembly.Module(wasmBytes));
+```
+
 ## License
 
 Licensed under the Apache 2.0 License.

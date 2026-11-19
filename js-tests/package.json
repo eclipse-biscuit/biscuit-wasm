@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node --experimental-wasm-modules index.js",
-    "test": "node --experimental-wasm-modules index.js"
+    "test": "node --experimental-wasm-modules index.js && node sync.js"
   },
   "author": "",
   "license": "MIT",

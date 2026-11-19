@@ -9,14 +9,18 @@
   },
   "scripts": {
     "build": "wasm-pack build --target bundler --out-dir module --out-name biscuit --scope biscuit-auth && npm run append-snippets",
-    "format": "prettier -w ./snippets",
-    "check-format": "prettier -c ./snippets",
-    "append-snippets": "npm run check-format && cat ./snippets/*.js >> module/biscuit.js && cat ./snippets/definitions/*.d.ts >> module/biscuit.d.ts",
+    "format": "prettier -w ./scripts ./snippets",
+    "check-format": "prettier -c ./scripts ./snippets",
+    "append-snippets": "npm run check-format && node ./scripts/prepare-package.mjs",
     "remove-pkg-cruft": "rm module/package.json module/.gitignore module/README.md",
     "prepare-package": "npm run build && npm run remove-pkg-cruft",
     "prepublishOnly": "npm run prepare-package"
   },
   "files": [
+    "module/init.js",
+    "module/sync.js",
+    "module/sync.d.ts",
+    "module/workerd.js",
     "module/biscuit_bg.wasm",
     "module/biscuit.js",
     "module/biscuit_bg.js",
@@ -26,7 +30,22 @@
   "main": "module/biscuit.js",
   "type": "module",
   "exports": {
-    "import": "./module/biscuit.js"
+    ".": {
+      "types": "./module/biscuit.d.ts",
+      "workerd": "./module/workerd.js",
+      "import": "./module/biscuit.js",
+      "default": "./module/biscuit.js"
+    },
+    "./sync": {
+      "types": "./module/sync.d.ts",
+      "default": "./module/sync.js"
+    },
+    "./workerd": {
+      "types": "./module/biscuit.d.ts",
+      "default": "./module/workerd.js"
+    },
+    "./module/biscuit_bg.js": "./module/biscuit_bg.js",
+    "./module/biscuit_bg.wasm": "./module/biscuit_bg.wasm"
   },
   "module": "module/biscuit.js",
   "sideEffects": "false",
